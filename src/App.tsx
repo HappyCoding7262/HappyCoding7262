@@ -93,8 +93,22 @@ export default function App() {
     }
 
     if (savedUsers) {
-      const parsedUsers = JSON.parse(savedUsers);
+      let parsedUsers: User[] = JSON.parse(savedUsers);
+      // Ensure Mark's production admin credentials are sync'd to prevent localStorage lockouts
+      parsedUsers = parsedUsers.map(u => {
+        if (u.id === 'user-mark') {
+          return {
+            ...u,
+            email: 'mark@kindercentrum-ark.nl',
+            password: 'asdhjkl@3111AA',
+            role: 'Beheerder'
+          };
+        }
+        return u;
+      });
       setUsers(parsedUsers);
+      localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(parsedUsers));
+      
       if (savedUserId) {
         const foundUser = parsedUsers.find((u: User) => u.id === savedUserId);
         if (foundUser) setCurrentUser(foundUser);

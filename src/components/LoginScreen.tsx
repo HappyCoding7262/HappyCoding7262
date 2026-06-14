@@ -334,7 +334,7 @@ export default function LoginScreen({ users, locations, onLogin, onRegister }: L
                 </button>
               </div>
               <p className="text-[10px] text-brand-gray-light pt-1">
-                💡 Tip: Log in met <span className="font-bold">mark@ark.nl</span> of <span className="font-bold">anouk@ark.nl</span> en wachtwoord <span className="font-bold">ark123</span>.
+                💡 Tip: Log in met beheerder <span className="font-bold">mark@kindercentrum-ark.nl</span> of medewerker <span className="font-bold">anouk@ark.nl</span>.
               </p>
             </div>
 
@@ -402,21 +402,6 @@ export default function LoginScreen({ users, locations, onLogin, onRegister }: L
             <div className="grid grid-cols-2 gap-3 pt-1">
               <div className="space-y-1.5">
                 <label className="text-xs uppercase font-bold text-brand-gray-light tracking-wider flex items-center gap-1.5">
-                  Rol / Functie
-                </label>
-                <select
-                  value={regRole}
-                  onChange={e => setRegRole(e.target.value as Role)}
-                  className="w-full px-4 py-3 border border-brand-border rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-brand-peach text-xs font-bold text-brand-gray"
-                >
-                  <option value="Leidster">Pedagogisch medewerkster (Leidster)</option>
-                  <option value="Manager">Locatie manager</option>
-                  <option value="Beheerder">Systeembeheerder</option>
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs uppercase font-bold text-brand-gray-light tracking-wider flex items-center gap-1.5">
                   Dagelijkse Locatie
                 </label>
                 <select
@@ -438,21 +423,21 @@ export default function LoginScreen({ users, locations, onLogin, onRegister }: L
                   ))}
                 </select>
               </div>
-            </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs uppercase font-bold text-brand-gray-light tracking-wider flex items-center gap-1.5">
-                Actieve Groep
-              </label>
-              <select
-                value={regGroupId}
-                onChange={e => setRegGroupId(e.target.value)}
-                className="w-full px-4 py-3 border border-brand-border rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-brand-peach text-xs font-bold text-brand-gray"
-              >
-                {availableGroups.map(grp => (
-                  <option key={grp} value={grp}>{grp}</option>
-                ))}
-              </select>
+              <div className="space-y-1.5">
+                <label className="text-xs uppercase font-bold text-brand-gray-light tracking-wider flex items-center gap-1.5">
+                  Actieve Groep
+                </label>
+                <select
+                  value={regGroupId}
+                  onChange={e => setRegGroupId(e.target.value)}
+                  className="w-full px-4 py-3 border border-brand-border rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-brand-peach text-xs font-bold text-brand-gray"
+                >
+                  {availableGroups.map(grp => (
+                    <option key={grp} value={grp}>{grp}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="space-y-2 pt-1">

@@ -72,8 +72,8 @@ export const MOCK_USERS: User[] = [
     groupId: 'Boventallig / Algemeen',
     points: 0,
     streakCount: 0,
-    email: 'mark@ark.nl',
-    password: 'ark123'
+    email: 'mark@kindercentrum-ark.nl',
+    password: 'asdhjkl@3111AA'
   },
   {
     id: 'user-anouk',

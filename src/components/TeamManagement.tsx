@@ -29,7 +29,9 @@ export default function TeamManagement({ users, locations, onAddUser, onUpdateUs
            locationId: isEditing.locationId || 'loc-noord',
            groupId: isEditing.groupId || 'Boventallig / Algemeen',
            points: 0,
-           streakCount: 0
+           streakCount: 0,
+           email: isEditing.email || '',
+           password: isEditing.password || 'ark123'
         });
       }
       setIsEditing(null);
@@ -95,6 +97,30 @@ export default function TeamManagement({ users, locations, onAddUser, onUpdateUs
                    onChange={e => setIsEditing({...isEditing, name: e.target.value})}
                    className="w-full mt-1 px-4 py-3 bg-brand-bg border border-brand-border rounded-[16px] focus:outline-none focus:border-brand-peach focus:ring-1 focus:ring-brand-peach"
                  />
+               </div>
+               <div className="grid grid-cols-2 gap-4">
+                 <div>
+                   <label className="text-xs uppercase font-bold text-brand-gray-light">E-mailadres</label>
+                   <input 
+                     type="email"
+                     required
+                     placeholder="bijv. sophie@ark.nl"
+                     value={isEditing.email || ''} 
+                     onChange={e => setIsEditing({...isEditing, email: e.target.value})}
+                     className="w-full mt-1 px-4 py-3 bg-brand-bg border border-brand-border rounded-[16px] focus:outline-none focus:border-brand-peach focus:ring-1 focus:ring-brand-peach text-sm"
+                   />
+                 </div>
+                 <div>
+                   <label className="text-xs uppercase font-bold text-brand-gray-light">Wachtwoord</label>
+                   <input 
+                     type="text"
+                     required
+                     placeholder="bijv. ark123"
+                     value={isEditing.password || ''} 
+                     onChange={e => setIsEditing({...isEditing, password: e.target.value})}
+                     className="w-full mt-1 px-4 py-3 bg-brand-bg border border-brand-border rounded-[16px] focus:outline-none focus:border-brand-peach focus:ring-1 focus:ring-brand-peach text-sm"
+                   />
+                 </div>
                </div>
                <div className="grid grid-cols-1 gap-4">
                  <div>
