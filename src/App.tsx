@@ -337,8 +337,15 @@ export default function App() {
   };
 
   if (!currentUser) {
-    // If not logged in, show Login flow
-    return <LoginScreen users={users} onLogin={handleUserSwitch} />;
+    // If not logged in, show Login flow with credentials & registration
+    return (
+      <LoginScreen 
+        users={users} 
+        locations={locations} 
+        onLogin={handleUserSwitch} 
+        onRegister={handleAddUser} 
+      />
+    );
   }
 
   // Shared daily target metrics (morales check)
@@ -350,52 +357,6 @@ export default function App() {
       
       {/* High-fidelity particles success trigger */}
       <Confetti trigger={confettiTrigger} />
-
-      {/* Top Banner Warning & Sandbox Controller */}
-      <div className="bg-slate-900 text-slate-100 py-3 px-4 shadow-sm border-b border-slate-800 relative z-50">
-        <div className="w-full max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="flex h-2.5 w-2.5 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-            </span>
-            <p className="font-bold text-slate-200">
-              ⚡ Sandbox Preview &middot; <span className="text-amber-400">Actieve sessie als {currentUser.name} ({currentUser.role})</span>
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-               onClick={handleLogout}
-               className="p-1 px-2.5 rounded-xl border border-slate-750 bg-slate-800 text-[10px] font-bold text-slate-300 hover:text-white hover:bg-slate-750 transition flex items-center gap-1 cursor-pointer"
-            >
-              Uitloggen
-            </button>
-            <button
-              id="reset-state-button"
-              onClick={handleResetData}
-              title="Herstel alle taken naar begintoestand"
-              className="p-1 px-2.5 rounded-xl border border-slate-750 bg-slate-800 text-[10px] font-bold text-slate-300 hover:text-white hover:bg-slate-750 transition flex items-center gap-1 cursor-pointer"
-            >
-              <RotateCcw className="w-3 h-3" /> Reset
-            </button>
-            <button
-              id="google-auth-button"
-              onClick={async () => {
-                if (isGoogleSignedIn) await logout();
-                else await googleSignIn();
-              }}
-              className={`p-1 px-2.5 rounded-xl border border-slate-750 text-[10px] font-bold transition flex items-center gap-1 cursor-pointer ${
-                isGoogleSignedIn ? 'bg-orange-900 border-orange-800 text-orange-200 hover:bg-orange-800' : 'bg-slate-800 text-amber-300 hover:bg-slate-750 hover:text-amber-200'
-              }`}
-            >
-              {isGoogleSignedIn ? <LogOut className="w-3 h-3" /> : <LogIn className="w-3 h-3" />}
-              {isGoogleSignedIn ? 'Uitloggen (Google)' : 'Login voor Google Tasks'}
-            </button>
-          </div>
-
-        </div>
-      </div>
 
       {/* Primary Site Header & Brand element */}
       <header className="bg-white border-b border-brand-border sticky top-0 z-40">
@@ -571,11 +532,14 @@ export default function App() {
       {isEditingProfile && (
         <UserProfileModal 
           user={currentUser}
-          onSave={(bio, avatar) => {
-            handleUpdateUser(currentUser.id, { bio, avatar });
+          onSave={(bio, avatar, password) => {
+            const updates: Partial<User> = { bio, avatar };
+            if (password) updates.password = password;
+            handleUpdateUser(currentUser.id, updates);
             setIsEditingProfile(false);
           }}
           onClose={() => setIsEditingProfile(false)}
+          onLogout={handleLogout}
         />
       )}
 

@@ -35,6 +35,8 @@ export interface User {
   streakCount?: number;
   lastCompletedDate?: string;
   hearts?: number; // Leaderboard hearts sent by others
+  email?: string; // Account email
+  password?: string; // Account password
 }
 
 export interface Task {

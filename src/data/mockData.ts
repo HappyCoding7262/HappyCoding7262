@@ -71,7 +71,9 @@ export const MOCK_USERS: User[] = [
     locationId: 'loc-noord',
     groupId: 'Boventallig / Algemeen',
     points: 0,
-    streakCount: 0
+    streakCount: 0,
+    email: 'mark@ark.nl',
+    password: 'ark123'
   },
   {
     id: 'user-anouk',
@@ -83,7 +85,9 @@ export const MOCK_USERS: User[] = [
     groupId: 'De Vlindergroep',
     points: 120,
     streakCount: 3,
-    lastCompletedDate: new Date().toISOString()
+    lastCompletedDate: new Date().toISOString(),
+    email: 'anouk@ark.nl',
+    password: 'ark123'
   },
   {
     id: 'user-sanne',
@@ -95,7 +99,9 @@ export const MOCK_USERS: User[] = [
     groupId: 'De Rupsengroep',
     points: 85,
     streakCount: 1,
-    lastCompletedDate: new Date().toISOString()
+    lastCompletedDate: new Date().toISOString(),
+    email: 'sanne@ark.nl',
+    password: 'ark123'
   },
   {
     id: 'user-lotte',
@@ -107,7 +113,9 @@ export const MOCK_USERS: User[] = [
     groupId: 'De Bijengroep',
     points: 150,
     streakCount: 5,
-    lastCompletedDate: new Date().toISOString()
+    lastCompletedDate: new Date().toISOString(),
+    email: 'lotte@ark.nl',
+    password: 'ark123'
   },
   {
     id: 'user-fatima',
@@ -119,7 +127,9 @@ export const MOCK_USERS: User[] = [
     groupId: 'De Kikkergroep',
     points: 110,
     streakCount: 2,
-    lastCompletedDate: new Date(Date.now() - 24 * 3600 * 1000).toISOString()
+    lastCompletedDate: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
+    email: 'fatima@ark.nl',
+    password: 'ark123'
   },
   {
     id: 'user-merel',
@@ -130,7 +140,9 @@ export const MOCK_USERS: User[] = [
     locationId: 'loc-noord',
     groupId: 'Boventallig / Algemeen',
     points: 0,
-    streakCount: 0
+    streakCount: 0,
+    email: 'merel@ark.nl',
+    password: 'ark123'
   }
 ];
 

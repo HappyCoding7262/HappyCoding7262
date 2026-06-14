@@ -14,7 +14,7 @@ interface TaskFormProps {
   users?: User[];
   currentUser?: User;
   initialTask?: Task | null;
-  onAddTask: (taskData: Omit<Task, 'id' | 'createdByUserId' | 'createdByName' | 'createdAt'>) => void;
+  onAddTask: (taskData: Omit<Task, 'id' | 'createdByUserId' | 'createdByName' | 'createdAt'>, creatorName: string) => void;
   onEditTask?: (taskId: string, taskData: Partial<Task>) => void;
   onClose: () => void;
 }

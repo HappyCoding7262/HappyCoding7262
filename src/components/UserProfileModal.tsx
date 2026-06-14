@@ -1,22 +1,24 @@
 import React, { useState } from 'react';
 import { User } from '../types';
-import { X, Check } from 'lucide-react';
+import { X, Check, LogOut } from 'lucide-react';
 
 interface UserProfileModalProps {
   user: User;
-  onSave: (bio: string, avatar: string) => void;
+  onSave: (bio: string, avatar: string, password?: string) => void;
   onClose: () => void;
+  onLogout: () => void;
 }
 
 const AVATAR_OPTIONS = ['😊', '👩‍🏫', '👨‍🏫', '👱‍♀️', '👩‍🦰', '👩🏽‍💼', '🦸‍♀️', '🦸‍♂️', '🌟', '🎨', '🚀', '⛵'];
 
-export default function UserProfileModal({ user, onSave, onClose }: UserProfileModalProps) {
+export default function UserProfileModal({ user, onSave, onClose, onLogout }: UserProfileModalProps) {
   const [bio, setBio] = useState(user.bio || '');
   const [avatar, setAvatar] = useState(user.avatar || '😊');
+  const [password, setPassword] = useState(user.password || 'ark123');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(bio, avatar);
+    onSave(bio, avatar, password);
     onClose();
   };
 
@@ -70,6 +72,31 @@ export default function UserProfileModal({ user, onSave, onClose }: UserProfileM
               onChange={(e) => setBio(e.target.value)}
               className="w-full px-5 py-4 rounded-[24px] border border-brand-border bg-brand-bg focus:outline-none focus:ring-2 focus:ring-brand-peach/50 text-sm font-medium text-brand-gray-dark placeholder-brand-gray-light transition resize-none"
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase font-bold tracking-[0.1em] text-brand-gray-light block">Wijzig Wachtwoord</label>
+            <input
+              type="password"
+              placeholder="Voer nieuw wachtwoord in..."
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-5 py-3.5 rounded-[24px] border border-brand-border bg-brand-bg focus:outline-none focus:ring-2 focus:ring-brand-peach/50 text-sm font-medium text-brand-gray-dark placeholder-brand-gray-light transition"
+            />
+          </div>
+
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                onLogout();
+                onClose();
+              }}
+              className="w-full py-3.5 px-5 text-xs font-bold uppercase tracking-wider text-rose-600 bg-rose-50 hover:bg-rose-100/80 active:scale-95 rounded-full transition flex items-center justify-center gap-2 cursor-pointer border border-rose-200/50"
+            >
+              <LogOut className="w-4 h-4 text-rose-500" />
+              Sessie Beëindigen (Uitloggen)
+            </button>
           </div>
 
           <div className="flex gap-4 pt-4 border-t border-brand-border">
