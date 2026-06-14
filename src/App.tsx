@@ -45,6 +45,13 @@ export default function App() {
   const [isGoogleSignedIn, setIsGoogleSignedIn] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [actionPrompt, setActionPrompt] = useState<{ type: 'claim' | 'complete', taskId: string } | null>(null);
+  const [selectedActionNames, setSelectedActionNames] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!actionPrompt) {
+      setSelectedActionNames([]);
+    }
+  }, [actionPrompt]);
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -579,37 +586,54 @@ export default function App() {
         const staffList = currentUser?.staffNames
           ? currentUser.staffNames.split(',').map(s => s.trim()).filter(Boolean)
           : [];
+
+        const formatNamesList = (names: string[]): string => {
+          if (names.length === 0) return '';
+          if (names.length === 1) return names[0];
+          if (names.length === 2) return `${names[0]} & ${names[1]}`;
+          return `${names.slice(0, -1).join(', ')} & ${names[names.length - 1]}`;
+        };
+
         return (
           <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-[32px] p-8 w-full max-w-sm border border-brand-border shadow-xl">
               <h3 className="text-xl font-serif text-brand-gray-dark mb-2">Wie ben jij?</h3>
-              <p className="text-sm text-brand-gray mb-6">Voer je naam in of selecteer je naam om deze actie uit te voeren.</p>
+              <p className="text-sm text-brand-gray mb-6">Selecteer of voer de namen in van de leidsters die deze taak uitvoeren.</p>
               
               {staffList.length > 0 && (
                 <div className="mb-5">
-                  <p className="text-[10px] font-extrabold text-brand-gray-light uppercase tracking-wider mb-2.5">Selecteer jouw naam:</p>
+                  <p className="text-[10px] font-extrabold text-brand-gray-light uppercase tracking-wider mb-2.5">
+                    Selecteer wie meehelpt (meerdere mogelijk):
+                  </p>
                   <div className="grid grid-cols-2 gap-2">
-                    {staffList.map(name => (
-                      <button
-                        key={name}
-                        type="button"
-                        onClick={() => {
-                          if (actionPrompt.type === 'claim') {
-                            handleClaimTask(actionPrompt.taskId, name);
-                          } else if (actionPrompt.type === 'complete') {
-                            handleCompleteTask(actionPrompt.taskId, name);
-                          }
-                          setActionPrompt(null);
-                        }}
-                        className="px-4 py-3 bg-brand-bg hover:bg-brand-sage hover:text-white rounded-[16px] border border-brand-border hover:border-brand-sage text-xs font-bold text-brand-gray-dark text-center transition duration-200 active:scale-95 cursor-pointer"
-                      >
-                        {name}
-                      </button>
-                    ))}
+                    {staffList.map(name => {
+                      const isSelected = selectedActionNames.includes(name);
+                      return (
+                        <button
+                          key={name}
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedActionNames(selectedActionNames.filter(n => n !== name));
+                            } else {
+                              setSelectedActionNames([...selectedActionNames, name]);
+                            }
+                          }}
+                          className={`px-4 py-3 rounded-[16px] border text-xs font-bold text-center transition duration-200 active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 ${
+                            isSelected 
+                              ? 'bg-brand-sage text-white border-brand-sage shadow-sm'
+                              : 'bg-brand-bg text-brand-gray-dark border-brand-border hover:bg-brand-sage-lighter hover:border-brand-sage-light'
+                          }`}
+                        >
+                          {isSelected && <span className="text-xs">✓</span>}
+                          {name}
+                        </button>
+                      );
+                    })}
                   </div>
                   <div className="relative flex py-4 items-center">
                     <div className="flex-grow border-t border-brand-border"></div>
-                    <span className="flex-shrink mx-3 text-[9px] text-brand-gray-light font-extrabold uppercase tracking-wider">of typ een naam</span>
+                    <span className="flex-shrink mx-3 text-[9px] text-brand-gray-light font-extrabold uppercase tracking-wider">of voeg extra naam toe</span>
                     <div className="flex-grow border-t border-brand-border"></div>
                   </div>
                 </div>
@@ -618,23 +642,37 @@ export default function App() {
               <form onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
-                const name = formData.get('personName') as string;
-                if (!name.trim()) return;
+                const typedName = (formData.get('personName') as string || '').trim();
+                
+                const namesToSend = [...selectedActionNames];
+                if (typedName) {
+                  namesToSend.push(typedName);
+                }
+
+                if (namesToSend.length === 0) return;
+                const finalJoinedName = formatNamesList(namesToSend);
                 
                 if (actionPrompt.type === 'claim') {
-                  handleClaimTask(actionPrompt.taskId, name.trim());
+                  handleClaimTask(actionPrompt.taskId, finalJoinedName);
                 } else if (actionPrompt.type === 'complete') {
-                  handleCompleteTask(actionPrompt.taskId, name.trim());
+                  handleCompleteTask(actionPrompt.taskId, finalJoinedName);
                 }
                 setActionPrompt(null);
               }}>
                 <input
                   name="personName"
                   autoFocus={staffList.length === 0}
-                  required
-                  placeholder="Jouw voornaam..."
+                  required={selectedActionNames.length === 0}
+                  placeholder={selectedActionNames.length > 0 ? "Extra naam toevoegen (optioneel)..." : "Jouw voornaam..."}
                   className="w-full px-5 py-4 rounded-full border border-brand-border bg-brand-bg focus:outline-none focus:ring-2 focus:ring-brand-peach/50 text-sm font-medium text-brand-gray-dark mb-6"
                 />
+                
+                {selectedActionNames.length > 0 && (
+                  <div className="mb-4 text-center">
+                    <p className="text-xs text-brand-gray-light">Geselecteerd: <span className="font-bold text-brand-sage">{formatNamesList(selectedActionNames)}</span></p>
+                  </div>
+                )}
+
                 <div className="flex gap-3">
                   <button
                     type="button"
