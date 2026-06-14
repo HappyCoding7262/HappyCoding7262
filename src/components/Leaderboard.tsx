@@ -19,29 +19,33 @@ export default function Leaderboard({ users, tasks = [], onSendHeart, currentUse
   const leaderboardData = useMemo(() => {
     return users.map(user => {
       let calculatedPoints = user.points || 0;
-      let completedThisMonth = 0;
+      
+      const userTotalCompletedTasks = tasks.filter(t => 
+        t.status === 'Completed' && 
+        (t.completedByUserId === user.id || t.claimedByUserId === user.id)
+      ).length;
+
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      const userCompletedTasksThisMonth = tasks.filter(t => 
+        t.status === 'Completed' && 
+        (t.completedByUserId === user.id || t.claimedByUserId === user.id) && 
+        t.completedAt && 
+        new Date(t.completedAt).getMonth() === currentMonth &&
+        new Date(t.completedAt).getFullYear() === currentYear
+      );
 
       if (timeframe === 'month') {
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
-
-        const userCompletedTasksThisMonth = tasks.filter(t => 
-          t.status === 'Completed' && 
-          t.claimedByUserId === user.id && 
-          t.completedAt && 
-          new Date(t.completedAt).getMonth() === currentMonth &&
-          new Date(t.completedAt).getFullYear() === currentYear
-        );
-
         calculatedPoints = userCompletedTasksThisMonth.length * 15;
-        completedThisMonth = userCompletedTasksThisMonth.length;
       }
 
       return {
         ...user,
         displayPoints: calculatedPoints,
-        tasksCompletedPeriod: completedThisMonth
+        tasksCompletedPeriod: userCompletedTasksThisMonth.length,
+        tasksCompletedAllTime: userTotalCompletedTasks
       };
     }).sort((a, b) => b.displayPoints - a.displayPoints);
   }, [users, tasks, timeframe]);
@@ -136,7 +140,7 @@ export default function Leaderboard({ users, tasks = [], onSendHeart, currentUse
                     </h3>
                     <p className="text-xs text-brand-gray-light">
                       {user.displayPoints} {user.displayPoints === 1 ? 'punt' : 'punten'}
-                      {timeframe === 'all-time' && ` • ${user.streakCount || 0} Dagen Streak`}
+                      {timeframe === 'all-time' && ` • ${user.tasksCompletedAllTime} ${user.tasksCompletedAllTime === 1 ? 'taak' : 'taken'} • ${user.streakCount || 0} Dagen Streak`}
                       {timeframe === 'month' && ` • ${user.tasksCompletedPeriod} ${user.tasksCompletedPeriod === 1 ? 'taak' : 'taken'} voltooid`}
                     </p>
                   </div>
