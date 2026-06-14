@@ -575,51 +575,86 @@ export default function App() {
       </AnimatePresence>
 
       {/* Action Name Prompt Modal */}
-      {actionPrompt && (
-        <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[32px] p-8 w-full max-w-sm border border-brand-border shadow-xl">
-            <h3 className="text-xl font-serif text-brand-gray-dark mb-2">Wie ben jij?</h3>
-            <p className="text-sm text-brand-gray mb-6">Voer je naam in om deze actie uit te voeren als de groep.</p>
-            
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const formData = new FormData(e.currentTarget);
-              const name = formData.get('personName') as string;
-              if (!name.trim()) return;
+      {actionPrompt && (() => {
+        const staffList = currentUser?.staffNames
+          ? currentUser.staffNames.split(',').map(s => s.trim()).filter(Boolean)
+          : [];
+        return (
+          <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-[32px] p-8 w-full max-w-sm border border-brand-border shadow-xl">
+              <h3 className="text-xl font-serif text-brand-gray-dark mb-2">Wie ben jij?</h3>
+              <p className="text-sm text-brand-gray mb-6">Voer je naam in of selecteer je naam om deze actie uit te voeren.</p>
               
-              if (actionPrompt.type === 'claim') {
-                handleClaimTask(actionPrompt.taskId, name.trim());
-              } else if (actionPrompt.type === 'complete') {
-                handleCompleteTask(actionPrompt.taskId, name.trim());
-              }
-              setActionPrompt(null);
-            }}>
-              <input
-                name="personName"
-                autoFocus
-                required
-                placeholder="Jouw voornaam..."
-                className="w-full px-5 py-4 rounded-full border border-brand-border bg-brand-bg focus:outline-none focus:ring-2 focus:ring-brand-peach/50 text-sm font-medium text-brand-gray-dark mb-6"
-              />
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setActionPrompt(null)}
-                  className="flex-1 py-4 text-brand-gray-dark font-bold text-sm hover:bg-brand-bg rounded-full transition-colors"
-                >
-                  Annuleren
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-4 bg-brand-sage text-white font-bold text-sm rounded-full shadow-sm hover:shadow-md transition-shadow"
-                >
-                  Doorgaan
-                </button>
-              </div>
-            </form>
+              {staffList.length > 0 && (
+                <div className="mb-5">
+                  <p className="text-[10px] font-extrabold text-brand-gray-light uppercase tracking-wider mb-2.5">Selecteer jouw naam:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {staffList.map(name => (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => {
+                          if (actionPrompt.type === 'claim') {
+                            handleClaimTask(actionPrompt.taskId, name);
+                          } else if (actionPrompt.type === 'complete') {
+                            handleCompleteTask(actionPrompt.taskId, name);
+                          }
+                          setActionPrompt(null);
+                        }}
+                        className="px-4 py-3 bg-brand-bg hover:bg-brand-sage hover:text-white rounded-[16px] border border-brand-border hover:border-brand-sage text-xs font-bold text-brand-gray-dark text-center transition duration-200 active:scale-95 cursor-pointer"
+                      >
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="relative flex py-4 items-center">
+                    <div className="flex-grow border-t border-brand-border"></div>
+                    <span className="flex-shrink mx-3 text-[9px] text-brand-gray-light font-extrabold uppercase tracking-wider">of typ een naam</span>
+                    <div className="flex-grow border-t border-brand-border"></div>
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const name = formData.get('personName') as string;
+                if (!name.trim()) return;
+                
+                if (actionPrompt.type === 'claim') {
+                  handleClaimTask(actionPrompt.taskId, name.trim());
+                } else if (actionPrompt.type === 'complete') {
+                  handleCompleteTask(actionPrompt.taskId, name.trim());
+                }
+                setActionPrompt(null);
+              }}>
+                <input
+                  name="personName"
+                  autoFocus={staffList.length === 0}
+                  required
+                  placeholder="Jouw voornaam..."
+                  className="w-full px-5 py-4 rounded-full border border-brand-border bg-brand-bg focus:outline-none focus:ring-2 focus:ring-brand-peach/50 text-sm font-medium text-brand-gray-dark mb-6"
+                />
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setActionPrompt(null)}
+                    className="flex-1 py-4 text-brand-gray-dark font-bold text-sm hover:bg-brand-bg rounded-full transition-colors"
+                  >
+                    Annuleren
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-4 bg-brand-sage text-white font-bold text-sm rounded-full shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    Doorgaan
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
     </div>
   );

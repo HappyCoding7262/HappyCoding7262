@@ -47,7 +47,7 @@ export const LOCATIONS: LocationInfo[] = [
   {
     id: 'loc-noord',
     name: 'Palestrinastraat 14',
-    groups: ['De Vlindergroep', 'De Rupsengroep', 'Boventallig / Algemeen']
+    groups: ['De Vlindergroep', 'De Rupsengroep', 'BSO Groep', 'Boventallig / Algemeen']
   },
   {
     id: 'loc-zuid',
@@ -143,6 +143,20 @@ export const MOCK_USERS: User[] = [
     streakCount: 0,
     email: 'merel@ark.nl',
     password: 'ark123'
+  },
+  {
+    id: 'user-bso',
+    name: 'BSO Groep',
+    role: 'Leidster',
+    avatar: '⛵',
+    bio: 'Gezamenlijk BSO Groep account.',
+    locationId: 'loc-noord',
+    groupId: 'BSO Groep',
+    points: 50,
+    streakCount: 2,
+    email: 'bso@kdv-ark.nl',
+    password: 'ark123',
+    staffNames: 'Anouk, Sanne, Lisa, Sophie'
   }
 ];
 

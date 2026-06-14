@@ -37,6 +37,7 @@ export interface User {
   hearts?: number; // Leaderboard hearts sent by others
   email?: string; // Account email
   password?: string; // Account password
+  staffNames?: string; // Optionele individuele namen van leidsters binnen dit (groeps)account
 }
 
 export interface Task {

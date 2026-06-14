@@ -31,7 +31,8 @@ export default function TeamManagement({ users, locations, onAddUser, onUpdateUs
            points: 0,
            streakCount: 0,
            email: isEditing.email || '',
-           password: isEditing.password || 'ark123'
+           password: isEditing.password || 'ark123',
+           staffNames: isEditing.staffNames || ''
         });
       }
       setIsEditing(null);
@@ -59,6 +60,11 @@ export default function TeamManagement({ users, locations, onAddUser, onUpdateUs
                  <span className="font-bold text-sm text-brand-gray-dark">{u.name}</span>
                </div>
                <span className="text-[10px] uppercase tracking-widest text-brand-gray-light mt-1">{u.role}</span>
+               {u.staffNames && (
+                 <span className="text-[10px] text-brand-sage font-semibold italic mt-1 max-w-[200px] truncate" title={u.staffNames}>
+                   Leidsters: {u.staffNames}
+                 </span>
+               )}
              </div>
              <div className="flex gap-2">
                <button 
@@ -137,6 +143,20 @@ export default function TeamManagement({ users, locations, onAddUser, onUpdateUs
                      )}
                    </select>
                  </div>
+                 {(!isEditing.role || isEditing.role === 'Leidster') && (
+                   <div>
+                     <label className="text-xs uppercase font-bold text-brand-gray-light">Namen van leidsters in deze groep (optioneel, komma-gescheiden)</label>
+                     <input 
+                       placeholder="bijv. Anouk, Sanne, Lisa, Sophie"
+                       value={isEditing.staffNames || ''} 
+                       onChange={e => setIsEditing({...isEditing, staffNames: e.target.value})}
+                       className="w-full mt-1 px-4 py-3 bg-brand-bg border border-brand-border rounded-[16px] focus:outline-none focus:border-brand-peach focus:ring-1 focus:ring-brand-peach placeholder:text-brand-gray-light text-sm"
+                     />
+                     <p className="text-[10px] leading-relaxed text-brand-gray mt-1">
+                       Flankeer hier de namen van de leidsters die dit account delen. Bij het claimen of voltooien selecteren zij hun eigen naam uit deze lijst.
+                     </p>
+                   </div>
+                 )}
                  <div>
                    <label className="text-xs uppercase font-bold text-brand-gray-light">Avatar Emoji</label>
                    <div className="flex flex-wrap gap-2 mt-2">

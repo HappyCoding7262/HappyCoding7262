@@ -195,9 +195,7 @@ export default function LoginScreen({ users, locations, onLogin, onRegister }: L
                   {showEmailPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              <p className="text-[10px] text-brand-gray-light pt-1">
-                💡 Tip: Log in met beheerder <span className="font-bold">mark@kindercentrum-ark.nl</span> of medewerker <span className="font-bold">anouk@ark.nl</span>.
-              </p>
+
             </div>
 
             {emailError && (
