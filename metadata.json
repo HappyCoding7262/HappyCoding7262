@@ -1,0 +1,6 @@
+{
+  "name": "De Ark Takenbeheer",
+  "description": "Een motiverende en visuele takenbeheer app voor de leidsters van Kindercentrum de Ark.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

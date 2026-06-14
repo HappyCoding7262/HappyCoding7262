@@ -1,0 +1,61 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user of the application",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["Leidster", "Manager"] },
+        "avatar": { "type": "string" },
+        "bio": { "type": "string" },
+        "locationId": { "type": "string" },
+        "groupId": { "type": "string" },
+        "points": { "type": "number" },
+        "streakCount": { "type": "number" },
+        "lastCompletedDate": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["uid", "name", "role"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "A task to be completed",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string", "enum": ["Cleaning", "Organizing", "Admin", "Activity", "Communication"] },
+        "priority": { "type": "string", "enum": ["Laag", "Gemiddeld", "Hoog"] },
+        "locationId": { "type": "string" },
+        "groupId": { "type": "string" },
+        "status": { "type": "string", "enum": ["Open", "Claimed", "Completed"] },
+        "createdByUserId": { "type": "string" },
+        "createdByName": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "claimedByUserId": { "type": "string" },
+        "claimedByName": { "type": "string" },
+        "claimedAt": { "type": "string" },
+        "completedByUserId": { "type": "string" },
+        "completedByName": { "type": "string" },
+        "completedAt": { "type": "string" },
+        "cheerMessage": { "type": "string" },
+        "googleTaskId": { "type": "string" }
+      },
+      "required": ["id", "title", "description", "category", "priority", "locationId", "status", "createdByUserId", "createdByName", "createdAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "tasks/{taskId}": {
+      "schema": "Task",
+      "description": "Tasks for the daycare"
+    }
+  }
+}
