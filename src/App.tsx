@@ -225,7 +225,7 @@ export default function App() {
 
     // 2. Add points for the worker to boost Motivation!
     const updatedUsers = users.map(user => {
-      if (user.id === currentUser.id && user.role === 'Leidster') {
+      if (user.id === currentUser.id) {
         const premiumAddition = 15; // +15 Points
         const newPoints = (user.points || 0) + premiumAddition;
 
