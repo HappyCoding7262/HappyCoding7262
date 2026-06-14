@@ -12,14 +12,8 @@ interface LoginScreenProps {
 const AVATAR_OPTIONS = ['😊', '👩‍🏫', '👨‍🏫', '👱‍♀️', '👩‍🦰', '👩🏽‍💼', '🦸‍♀️', '🦸‍♂️', '🌟', '🎨', '🚀', '⛵'];
 
 export default function LoginScreen({ users, locations, onLogin, onRegister }: LoginScreenProps) {
-  // Tabs: 'quick' | 'email' | 'register'
-  const [activeTab, setActiveTab] = useState<'quick' | 'email' | 'register'>('quick');
-
-  // Login variables
-  const [selectedUserForPassword, setSelectedUserForPassword] = useState<User | null>(null);
-  const [quickPassword, setQuickPassword] = useState('');
-  const [showQuickPassword, setShowQuickPassword] = useState(false);
-  const [quickError, setQuickError] = useState('');
+  // Tabs: 'email' | 'register'
+  const [activeTab, setActiveTab] = useState<'email' | 'register'>('email');
 
   // Email login variables
   const [emailInput, setEmailInput] = useState('');
@@ -41,21 +35,6 @@ export default function LoginScreen({ users, locations, onLogin, onRegister }: L
   // Find groups of selected location
   const selectedLocationObj = locations.find(l => l.id === regLocationId);
   const availableGroups = selectedLocationObj ? selectedLocationObj.groups : ['Boventallig / Algemeen'];
-
-  // Handle Quick Login
-  const handleQuickLoginSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedUserForPassword) return;
-
-    // Check password
-    const expectedPassword = selectedUserForPassword.password || 'ark123';
-    if (quickPassword === expectedPassword) {
-      setQuickError('');
-      onLogin(selectedUserForPassword.id);
-    } else {
-      setQuickError('Onjuist wachtwoord. Probeer het opnieuw of gebruik "ark123"!');
-    }
-  };
 
   // Handle Email Login
   const handleEmailLoginSubmit = (e: React.FormEvent) => {
@@ -125,18 +104,7 @@ export default function LoginScreen({ users, locations, onLogin, onRegister }: L
       setRegSuccess('Account succesvol aangemaakt! U wordt nu ingelogd...');
       setTimeout(() => {
         // Find newly created user to log in
-        // A temporary user lookup sequence
-        // We look for name or email in the users list
-        // Since onRegister updates parent State which triggers async,
-        // we can safely auto-login by waiting slightly or finding in the next render cycle, 
-        // but since onLogin takes id and saving is immediate, we can estimate id:
-        // Actually, App.tsx generates user-id using Date.now().
-        // To log in reliably, we can search or pass a callback.
-        // But we can also let them select from Quick Login where they will see their beautiful new avatar!
-        // Even better, let's trigger search or auto-switch by doing a robust match or letting them log in instantly.
         onLogin(`user-${Date.now()}`); 
-        // If lookup fails due to race condition, they can log in via email. Let's redirect to quick/email tab or do an immediate fallback:
-        // By changing tab to email with credentials pre-filled
         setActiveTab('email');
         setEmailInput(regEmail);
         setPasswordInput(regPassword);
@@ -164,19 +132,6 @@ export default function LoginScreen({ users, locations, onLogin, onRegister }: L
         <div className="flex bg-brand-bg p-1.5 rounded-full border border-brand-border mb-8 overflow-x-auto">
           <button
             onClick={() => {
-              setActiveTab('quick');
-              setSelectedUserForPassword(null);
-              setQuickError('');
-              setQuickPassword('');
-            }}
-            className={`flex-1 py-3 px-4 rounded-full text-xs font-bold uppercase tracking-wider transition duration-250 whitespace-nowrap cursor-pointer ${
-              activeTab === 'quick' ? 'bg-white shadow-sm text-brand-gray-dark border border-brand-border/30' : 'text-brand-gray-light hover:text-brand-gray'
-            }`}
-          >
-            Snel Inloggen
-          </button>
-          <button
-            onClick={() => {
               setActiveTab('email');
               setEmailError('');
             }}
@@ -201,99 +156,6 @@ export default function LoginScreen({ users, locations, onLogin, onRegister }: L
         </div>
 
         {/* Form area */}
-
-        {/* TAB 1: QUICK COMPACT PROFILE LOGIN */}
-        {activeTab === 'quick' && (
-          <div>
-            {!selectedUserForPassword ? (
-              <div>
-                <p className="text-xs uppercase font-bold text-brand-gray-light tracking-wider mb-4 text-center">
-                  Selecteer uw profiel om in te loggen:
-                </p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
-                  {users.map(user => (
-                    <button
-                      key={user.id}
-                      onClick={() => {
-                        setSelectedUserForPassword(user);
-                        setQuickPassword('');
-                        setQuickError('');
-                      }}
-                      className="group flex flex-col items-center gap-2.5 p-4 bg-brand-bg rounded-[20px] border border-brand-border hover:shadow-md hover:border-brand-sage-light hover:bg-brand-sage-lighter transition active:scale-95 cursor-pointer text-center relative"
-                    >
-                      <div className="text-4xl filter drop-shadow hover:scale-110 transition duration-200">{user.avatar}</div>
-                      <div>
-                        <p className="text-xs font-bold text-brand-gray-dark leading-tight group-hover:text-brand-olive transition">{user.name}</p>
-                        <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wide bg-white border border-brand-border mt-1 text-brand-gray">
-                          {user.role}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <form onSubmit={handleQuickLoginSubmit} className="space-y-5 animate-fade-in bg-brand-bg/60 p-5 rounded-[24px] border border-brand-border">
-                <div className="flex items-center gap-3 pb-3 border-b border-brand-border">
-                  <span className="text-3xl">{selectedUserForPassword.avatar}</span>
-                  <div>
-                    <h3 className="text-sm font-bold text-brand-gray-dark">Inloggen als {selectedUserForPassword.name}</h3>
-                    <p className="text-xs text-brand-gray-light uppercase tracking-wider font-semibold">{selectedUserForPassword.role}</p>
-                  </div>
-                  <button 
-                    type="button" 
-                    onClick={() => setSelectedUserForPassword(null)}
-                    className="ml-auto text-xs text-brand-gray-light hover:text-brand-gray-dark font-semibold border border-brand-border bg-white px-3 py-1.5 rounded-full cursor-pointer"
-                  >
-                    Wissel profiel
-                  </button>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs uppercase font-bold text-brand-gray-light tracking-wider flex items-center gap-1">
-                    <Key className="w-3.5 h-3.5 text-brand-peach" /> Wachtwoord
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showQuickPassword ? 'text' : 'password'}
-                      value={quickPassword}
-                      onChange={e => setQuickPassword(e.target.value)}
-                      placeholder="Voer uw wachtwoord in..."
-                      className="w-full pl-5 pr-12 py-3.5 border border-brand-border bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-brand-peach text-sm font-medium"
-                      autoFocus
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowQuickPassword(!showQuickPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-brand-gray-light hover:text-brand-gray cursor-pointer"
-                    >
-                      {showQuickPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between pt-1">
-                    <p className="text-[10px] text-brand-gray-light">
-                      💡 Tip: Vul <span className="font-bold">ark123</span> in voor demo gebruikers.
-                    </p>
-                  </div>
-                </div>
-
-                {quickError && (
-                  <p className="text-xs font-bold text-rose-600 bg-rose-50 p-3 rounded-xl border border-rose-100 flex items-center gap-1.5">
-                    ⚠️ {quickError}
-                  </p>
-                )}
-
-                <button
-                  type="submit"
-                  className="w-full py-4 px-6 bg-brand-olive hover:bg-brand-olive-light text-white text-xs font-bold uppercase tracking-widest rounded-full transition duration-200 flex items-center justify-center gap-2 shadow-sm cursor-pointer"
-                >
-                  Nu Beveiligd Inloggen
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </form>
-            )}
-          </div>
-        )}
 
         {/* TAB 2: TRADITIONAL EMAIL/PASSWORD LOGIN */}
         {activeTab === 'email' && (
