@@ -12,8 +12,8 @@ interface LoginScreenProps {
 const AVATAR_OPTIONS = ['😊', '👩‍🏫', '👨‍🏫', '👱‍♀️', '👩‍🦰', '👩🏽‍💼', '🦸‍♀️', '🦸‍♂️', '🌟', '🎨', '🚀', '⛵'];
 
 export default function LoginScreen({ users, locations, onLogin, onRegister }: LoginScreenProps) {
-  // Tabs: 'email' | 'register' | 'sandbox'
-  const [activeTab, setActiveTab] = useState<'email' | 'register' | 'sandbox'>('sandbox');
+  // Tabs: 'email' | 'register'
+  const [activeTab, setActiveTab] = useState<'email' | 'register'>('email');
 
   // Email login variables
   const [emailInput, setEmailInput] = useState('');
@@ -107,7 +107,7 @@ export default function LoginScreen({ users, locations, onLogin, onRegister }: L
       setRegSuccess('Account succesvol aangemaakt! U wordt nu ingelogd...');
       setTimeout(() => {
         onLogin(newUserId); 
-        setActiveTab('sandbox');
+        setActiveTab('email');
         setEmailInput('');
         setPasswordInput('');
         setRegSuccess('');
@@ -126,24 +126,12 @@ export default function LoginScreen({ users, locations, onLogin, onRegister }: L
           <div className="inline-flex items-center justify-center p-4 bg-brand-sage-lighter rounded-full text-brand-olive mb-4">
             <ShieldCheck className="w-8 h-8 text-brand-olive" />
           </div>
-          <h1 className="text-3xl font-serif text-brand-gray-dark tracking-tight mb-2">Pedagogisch Portal De Ark</h1>
+          <h1 className="text-3xl font-serif text-brand-gray-dark tracking-tight mb-2">Takenbeheer de Ark</h1>
           <p className="text-sm text-brand-gray">Samen zorgen voor een stralende dag op de groepen ⛵</p>
         </div>
 
         {/* Tab navigation buttons */}
         <div className="flex bg-brand-bg p-1 rounded-full border border-brand-border mb-8 overflow-x-auto gap-0.5">
-          <button
-            onClick={() => {
-              setActiveTab('sandbox');
-              setEmailError('');
-            }}
-            type="button"
-            className={`flex-1 py-2.5 px-3 rounded-full text-[10px] font-bold uppercase tracking-wider transition duration-200 whitespace-nowrap cursor-pointer flex items-center justify-center gap-1.5 ${
-              activeTab === 'sandbox' ? 'bg-brand-olive text-white shadow-sm' : 'text-brand-gray-light hover:text-brand-gray'
-            }`}
-          >
-            🛠️ Sandbox
-          </button>
           <button
             onClick={() => {
               setActiveTab('email');
@@ -172,52 +160,6 @@ export default function LoginScreen({ users, locations, onLogin, onRegister }: L
         </div>
 
         {/* Form area */}
-
-        {/* TAB 1: SANDBOX QUICK LOGIN */}
-        {activeTab === 'sandbox' && (
-          <div className="space-y-4 animate-fade-in">
-            <div className="bg-brand-sage-lighter border border-brand-sage/20 rounded-2xl p-4 text-xs text-brand-olive font-medium leading-relaxed">
-              <span className="font-bold">🛠️ Sandbox-modus actief:</span> Klik op een account hieronder om direct in te loggen zonder een e-mailadres of wachtwoord te hoeven invoeren. Handig tijdens het testen en ontwikkelen!
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[360px] overflow-y-auto pr-1">
-              {users.map((user) => (
-                <button
-                  key={user.id}
-                  onClick={() => onLogin(user.id)}
-                  type="button"
-                  className="flex items-center gap-3 p-3 text-left bg-brand-bg hover:bg-brand-sage-lighter border border-brand-border hover:border-brand-sage/40 rounded-2xl transition duration-200 active:scale-[0.98] group cursor-pointer"
-                >
-                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-xl shadow-xs border border-brand-border group-hover:border-brand-sage/30 shrink-0">
-                    {user.avatar || '😊'}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-bold text-xs text-brand-gray-dark truncate max-w-[120px]" title={user.name}>
-                        {user.name}
-                      </span>
-                      <span className={`px-1.5 py-0.5 rounded text-[8px] font-extrabold tracking-wider uppercase shrink-0 ${
-                        user.role === 'Beheerder' 
-                          ? 'bg-red-100 text-red-700' 
-                          : user.role === 'Manager' 
-                          ? 'bg-orange-100 text-orange-700' 
-                          : 'bg-green-100 text-green-700'
-                      }`}>
-                        {user.role}
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-brand-gray-light truncate mt-0.5">
-                      {locations.find(l => l.id === user.locationId)?.name || 'Geen locatie'} • {user.groupId}
-                    </p>
-                  </div>
-                  <div className="text-[10px] font-extrabold text-brand-gray-light uppercase tracking-wider pr-1 group-hover:text-brand-olive transition-colors shrink-0">
-                    Snel Login →
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* TAB 2: TRADITIONAL EMAIL/PASSWORD LOGIN */}
         {activeTab === 'email' && (

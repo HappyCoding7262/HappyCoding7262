@@ -12,7 +12,8 @@ import {
   HelpCircle,
   TrendingUp,
   Heart,
-  Mail
+  Mail,
+  WifiOff
 } from 'lucide-react';
 import { Task, User, CategoryInfo, LocationInfo } from './types';
 import { INITIAL_TASKS, MOCK_USERS, CHEER_MESSAGES, CATEGORIES, LOCATIONS } from './data/mockData';
@@ -50,6 +51,18 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [actionPrompt, setActionPrompt] = useState<{ type: 'claim' | 'complete', taskId: string } | null>(null);
   const [selectedActionNames, setSelectedActionNames] = useState<string[]>([]);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     if (!actionPrompt) {
@@ -79,6 +92,10 @@ export default function App() {
     // 1. Initial check and seed database ONLY if it has never been marked as initialized
     const checkAndSeed = async () => {
       try {
+        if (!navigator.onLine) {
+          console.warn("Database-initialisatie overgeslagen: u bent offline. Zodra u verbinding heeft, wordt dit gecontroleerd.");
+          return;
+        }
         const setupDocRef = doc(db, 'system', 'setup');
         const setupSnap = await getDoc(setupDocRef);
         if (!setupSnap.exists() || !setupSnap.data()?.initialized) {
@@ -100,8 +117,12 @@ export default function App() {
           await setDoc(setupDocRef, { initialized: true });
           console.log("Database seeding completed successfully!");
         }
-      } catch (e) {
-        console.error("Error checking or seeding database:", e);
+      } catch (e: any) {
+        if (e?.message?.includes("offline") || e?.code === "unavailable" || !navigator.onLine) {
+          console.info("Database-initialisatie uitgesteld: client is momenteel offline of bezig met verbinding maken.");
+        } else {
+          console.error("Error checking or seeding database:", e);
+        }
       }
     };
     
@@ -396,6 +417,13 @@ export default function App() {
       {/* High-fidelity particles success trigger */}
       <Confetti trigger={confettiTrigger} />
 
+      {isOffline && (
+        <div className="bg-amber-500 text-white text-xs font-bold py-2 px-4 text-center flex items-center justify-center gap-2 shadow-inner z-50 animate-fade-in">
+          <WifiOff className="w-3.5 h-3.5 animate-pulse" />
+          <span>U werkt momenteel offline. Wijzigingen worden lokaal bewaard en automatisch gesynchroniseerd wanneer u weer online bent.</span>
+        </div>
+      )}
+
       {/* Primary Site Header & Brand element */}
       <header className="bg-white border-b border-brand-border sticky top-0 z-40">
         <div className="w-[98%] sm:w-full max-w-5xl mx-auto px-1.5 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
@@ -406,7 +434,7 @@ export default function App() {
               <div className="w-5 h-5 border-2 border-white rounded-full flex items-center justify-center text-xs">⛵</div>
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight text-brand-gray leading-none">De Ark <span className="font-light text-brand-gray-light">| Takenbeheer</span></h1>
+              <h1 className="text-xl font-bold tracking-tight text-brand-gray leading-none">Takenbeheer <span className="font-light text-brand-gray-light">de Ark</span></h1>
             </div>
           </div>
 
