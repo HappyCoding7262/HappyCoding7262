@@ -5,81 +5,24 @@ service cloud.firestore {
       allow read, write: if false;
     }
     
-    function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
-    }
-    function incoming() { return request.resource.data; }
-    function existing() { return resource.data; }
-    function isSignedIn() { return request.auth != null && request.auth.token.email_verified == true; }
-    
-    function isValidUser(data) {
-      return data.keys().hasAll(['uid', 'name', 'role'])
-        && data.uid == request.auth.uid
-        && data.name is string && data.name.size() <= 100
-        && data.role in ['Leidster', 'Manager']
-        && (!!data.get('email', null) ? (data.email is string && data.email.size() <= 200) : true)
-        && (!!data.get('avatar', null) ? (data.avatar is string && data.avatar.size() <= 500) : true)
-        && (!!data.get('bio', null) ? (data.bio is string && data.bio.size() <= 500) : true)
-        && (!!data.get('locationId', null) ? (data.locationId is string && data.locationId.size() <= 50) : true)
-        && (!!data.get('groupId', null) ? (data.groupId is string && data.groupId.size() <= 50) : true)
-        && (!!data.get('points', null) ? (data.points is number && data.points >= 0) : true)
-        && (!!data.get('streakCount', null) ? (data.streakCount is number && data.streakCount >= 0) : true)
-        && (!!data.get('lastCompletedDate', null) ? (data.lastCompletedDate is string && data.lastCompletedDate.size() <= 50) : true)
-        && (!!data.get('createdAt', null) ? data.createdAt is string : true);
-    }
-    
     match /users/{userId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if isSignedIn() 
-        && isValidId(userId) 
-        && userId == request.auth.uid
-        && isValidUser(incoming());
-      allow update: if isSignedIn()
-        && userId == request.auth.uid
-        && isValidUser(incoming())
-        && incoming().uid == existing().uid
-        && incoming().role == existing().role // Users cannot escalate privileges
-        && incoming().createdAt == existing().createdAt;
-    }
-    
-    function isValidTask(data) {
-      return data.keys().hasAll(['id', 'title', 'description', 'category', 'priority', 'locationId', 'status', 'createdByUserId', 'createdByName', 'createdAt'])
-        && data.id is string && data.id.size() <= 128
-        && data.title is string && data.title.size() <= 200
-        && data.description is string && data.description.size() <= 1000
-        && data.category in ['Cleaning', 'Organizing', 'Admin', 'Activity', 'Communication']
-        && data.priority in ['Laag', 'Gemiddeld', 'Hoog']
-        && data.locationId is string && data.locationId.size() <= 50
-        && data.status in ['Open', 'Claimed', 'Completed']
-        && data.createdByUserId is string && data.createdByUserId.size() <= 128
-        && data.createdByName is string && data.createdByName.size() <= 100
-        && data.createdAt is string && data.createdAt.size() <= 50
-        && (!!data.get('groupId', null) ? (data.groupId is string && data.groupId.size() <= 50) : true)
-        && (!!data.get('claimedByUserId', null) ? (data.claimedByUserId is string && data.claimedByUserId.size() <= 128) : true)
-        && (!!data.get('claimedByName', null) ? (data.claimedByName is string && data.claimedByName.size() <= 100) : true)
-        && (!!data.get('claimedAt', null) ? (data.claimedAt is string && data.claimedAt.size() <= 50) : true)
-        && (!!data.get('completedByUserId', null) ? (data.completedByUserId is string && data.completedByUserId.size() <= 128) : true)
-        && (!!data.get('completedByName', null) ? (data.completedByName is string && data.completedByName.size() <= 100) : true)
-        && (!!data.get('completedAt', null) ? (data.completedAt is string && data.completedAt.size() <= 50) : true)
-        && (!!data.get('cheerMessage', null) ? (data.cheerMessage is string && data.cheerMessage.size() <= 500) : true)
-        && (!!data.get('googleTaskId', null) ? (data.googleTaskId is string && data.googleTaskId.size() <= 128) : true);
+      allow read, write: if true;
     }
     
     match /tasks/{taskId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn(); // We want all users to see the tasks
-      allow create: if isSignedIn()
-        && isValidId(taskId)
-        && isValidTask(incoming())
-        && incoming().createdByUserId == request.auth.uid;
-      allow update: if isSignedIn()
-        && isValidId(taskId)
-        && isValidTask(incoming())
-        && incoming().id == existing().id
-        && incoming().createdByUserId == existing().createdByUserId
-        && incoming().createdAt == existing().createdAt;
-      allow delete: if isSignedIn() && existing().createdByUserId == request.auth.uid || (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Manager');
+      allow read, write: if true;
+    }
+    
+    match /locations/{locationId} {
+      allow read, write: if true;
+    }
+    
+    match /categories/{categoryId} {
+      allow read, write: if true;
+    }
+    
+    match /goals/{goalId} {
+      allow read, write: if true;
     }
   }
 }

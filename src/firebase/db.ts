@@ -1,6 +1,6 @@
 import { collection, doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
-import { Task, User } from '../types';
+import { Task, User, CategoryInfo, LocationInfo } from '../types';
 
 enum OperationType {
   CREATE = 'create',
@@ -39,15 +39,19 @@ export const subscribeToUsers = (callback: (users: User[]) => void) => {
 
 export const saveUser = async (user: User) => {
   try {
-    const userDocRef = doc(db, 'users', user.id); // Or user.uid based on our blueprint, although types.ts has id
-    const docSnap = await getDoc(userDocRef);
-    if (!docSnap.exists()) {
-      await setDoc(userDocRef, { ...user, uid: user.id, createdAt: serverTimestamp() });
-    } else {
-      await updateDoc(userDocRef, { ...user, uid: user.id });
-    }
+    const userDocRef = doc(db, 'users', user.id);
+    await setDoc(userDocRef, { ...user, uid: user.id });
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, `users/${user.id}`);
+  }
+};
+
+export const deleteUserDB = async (userId: string) => {
+  try {
+    const userDocRef = doc(db, 'users', userId);
+    await deleteDoc(userDocRef);
+  } catch (err) {
+    handleFirestoreError(err, OperationType.DELETE, `users/${userId}`);
   }
 };
 
@@ -85,5 +89,82 @@ export const deleteTaskDB = async (taskId: string) => {
     await deleteDoc(taskDocRef);
   } catch (err) {
     handleFirestoreError(err, OperationType.DELETE, `tasks/${taskId}`);
+  }
+};
+
+// Location methods
+export const subscribeToLocations = (callback: (locations: LocationInfo[]) => void) => {
+  const q = query(collection(db, 'locations'));
+  return onSnapshot(q, (snapshot) => {
+    callback(snapshot.docs.map(d => d.data() as LocationInfo));
+  }, (err) => {
+    handleFirestoreError(err, OperationType.LIST, 'locations');
+  });
+};
+
+export const saveLocationDB = async (loc: LocationInfo) => {
+  try {
+    const locDocRef = doc(db, 'locations', loc.id);
+    await setDoc(locDocRef, loc);
+  } catch (err) {
+    handleFirestoreError(err, OperationType.WRITE, `locations/${loc.id}`);
+  }
+};
+
+export const deleteLocationDB = async (locId: string) => {
+  try {
+    const locDocRef = doc(db, 'locations', locId);
+    await deleteDoc(locDocRef);
+  } catch (err) {
+    handleFirestoreError(err, OperationType.DELETE, `locations/${locId}`);
+  }
+};
+
+// Category methods
+export const subscribeToCategories = (callback: (categories: CategoryInfo[]) => void) => {
+  const q = query(collection(db, 'categories'));
+  return onSnapshot(q, (snapshot) => {
+    callback(snapshot.docs.map(d => d.data() as CategoryInfo));
+  }, (err) => {
+    handleFirestoreError(err, OperationType.LIST, 'categories');
+  });
+};
+
+export const saveCategoryDB = async (cat: CategoryInfo) => {
+  try {
+    const catDocRef = doc(db, 'categories', cat.type);
+    await setDoc(catDocRef, cat);
+  } catch (err) {
+    handleFirestoreError(err, OperationType.WRITE, `categories/${cat.type}`);
+  }
+};
+
+export const deleteCategoryDB = async (type: string) => {
+  try {
+    const catDocRef = doc(db, 'categories', type);
+    await deleteDoc(catDocRef);
+  } catch (err) {
+    handleFirestoreError(err, OperationType.DELETE, `categories/${type}`);
+  }
+};
+
+// Goal methods
+export const subscribeToGoal = (callback: (goal: { targetTasks: number; rewardDescription: string }) => void) => {
+  const goalDocRef = doc(db, 'goals', 'teamGoal');
+  return onSnapshot(goalDocRef, (docSnap) => {
+    if (docSnap.exists()) {
+      callback(docSnap.data() as { targetTasks: number; rewardDescription: string });
+    }
+  }, (err) => {
+    handleFirestoreError(err, OperationType.GET, 'goals/teamGoal');
+  });
+};
+
+export const saveGoalDB = async (goal: { targetTasks: number; rewardDescription: string }) => {
+  try {
+    const goalDocRef = doc(db, 'goals', 'teamGoal');
+    await setDoc(goalDocRef, goal);
+  } catch (err) {
+    handleFirestoreError(err, OperationType.WRITE, 'goals/teamGoal');
   }
 };

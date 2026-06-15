@@ -24,13 +24,17 @@ import LoginScreen from './components/LoginScreen';
 import { LogIn, LogOut } from 'lucide-react';
 import { googleSignIn, logout, getAccessToken, initAuth } from './firebase/firebase';
 import { syncTaskToGoogle, completeGoogleTask } from './services/googleTasks';
+import { 
+  subscribeToTasks, createTaskDB, updateTaskDB, deleteTaskDB,
+  subscribeToUsers, saveUser, deleteUserDB,
+  subscribeToLocations, saveLocationDB, deleteLocationDB,
+  subscribeToCategories, saveCategoryDB, deleteCategoryDB,
+  subscribeToGoal, saveGoalDB
+} from './firebase/db';
+import { db } from './firebase/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
-const STORAGE_KEY_TASKS = 'ark_takenbeheer_tasks';
-const STORAGE_KEY_USERS = 'ark_takenbeheer_users';
 const STORAGE_KEY_LOGGED_IN = 'ark_takenbeheer_logged_in_id';
-const STORAGE_KEY_CATEGORIES = 'ark_takenbeheer_categories';
-const STORAGE_KEY_LOCATIONS = 'ark_takenbeheer_locations';
-const STORAGE_KEY_GOAL = 'ark_takenbeheer_goal';
 
 export default function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -70,126 +74,82 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Initialize data from localStorage (or defaults)
+  // Synchronise met Firestore in real-time voor een naadloze multi-device werking
   useEffect(() => {
-    const savedTasks = localStorage.getItem(STORAGE_KEY_TASKS);
-    const savedUsers = localStorage.getItem(STORAGE_KEY_USERS);
-    const savedUserId = localStorage.getItem(STORAGE_KEY_LOGGED_IN);
-    const savedCategories = localStorage.getItem(STORAGE_KEY_CATEGORIES);
-    const savedLocations = localStorage.getItem(STORAGE_KEY_LOCATIONS);
-    const savedGoal = localStorage.getItem(STORAGE_KEY_GOAL);
-
-    if (savedGoal) setTeamGoal(JSON.parse(savedGoal));
-
-    let initialLocs = LOCATIONS;
-    if (savedLocations) {
-      initialLocs = JSON.parse(savedLocations);
-    } else {
-      localStorage.setItem(STORAGE_KEY_LOCATIONS, JSON.stringify(LOCATIONS));
-    }
-    setLocations(initialLocs);
-
-    let initialCats = Object.values(CATEGORIES);
-    if (savedCategories) {
-      initialCats = JSON.parse(savedCategories);
-    } else {
-      localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(Object.values(CATEGORIES)));
-    }
-    setCategories(initialCats);
-
-    let loadedUsers = MOCK_USERS;
-    if (savedUsers) {
-      loadedUsers = JSON.parse(savedUsers);
-    }
-
-    let loadedTasks = INITIAL_TASKS;
-    if (savedTasks) {
-      loadedTasks = JSON.parse(savedTasks);
-    }
-
-    // Now let's run sanitization to clean up broken references and ensure all fields are perfectly linked!
-    // This maps any name matching 'Palestrinastraat 14' to 'loc-noord', etc.
-    const sanitizeId = (idOrName: string): string => {
-      if (!idOrName) return initialLocs[0]?.id || 'loc-noord';
-      // If it exists in actual IDs, it's valid:
-      if (initialLocs.some(l => l.id === idOrName)) return idOrName;
-      // Check if it's matching by name:
-      const matched = initialLocs.find(l => l.name.toLowerCase().trim() === idOrName.toLowerCase().trim());
-      if (matched) return matched.id;
-      // Default fallback
-      return initialLocs[0]?.id || 'loc-noord';
-    };
-
-    const sanitizedUsers = loadedUsers.map(user => {
-      const isMark = user.id === 'user-mark';
-      const cleanLocId = sanitizeId(user.locationId);
-      const locObj = initialLocs.find(l => l.id === cleanLocId);
-      const cleanGroupId = (locObj?.groups.includes(user.groupId) || user.groupId === 'Boventallig / Algemeen')
-        ? user.groupId 
-        : (locObj?.groups[0] || 'Boventallig / Algemeen');
-
-      return {
-        ...user,
-        locationId: cleanLocId,
-        groupId: cleanGroupId,
-        email: isMark ? 'mark@kindercentrum-ark.nl' : user.email,
-        password: isMark ? 'asdhjkl@3111AA' : user.password,
-        role: isMark ? 'Beheerder' : user.role,
-        points: user.points ?? 0,
-        hearts: user.hearts ?? 0,
-        streakCount: user.streakCount ?? 0,
-      };
-    });
-
-    const sanitizedTasks = loadedTasks.map(task => {
-      const cleanLocId = sanitizeId(task.locationId);
-      const locObj = initialLocs.find(l => l.id === cleanLocId);
-      const cleanGroupId = (task.groupId && (locObj?.groups.includes(task.groupId) || task.groupId === 'Boventallig / Algemeen'))
-        ? task.groupId 
-        : undefined;
-
-      return {
-        ...task,
-        locationId: cleanLocId,
-        groupId: cleanGroupId,
-      };
-    });
-
-    setUsers(sanitizedUsers);
-    setTasks(sanitizedTasks);
-
-    localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(sanitizedUsers));
-    localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(sanitizedTasks));
-
-    if (savedUserId) {
-      const foundUser = sanitizedUsers.find((u: User) => u.id === savedUserId);
-      if (foundUser) {
-        setCurrentUser(foundUser);
+    // 1. Subscribe to locations
+    const unsubLocs = subscribeToLocations((dbLocs) => {
+      if (dbLocs.length === 0) {
+        LOCATIONS.forEach(loc => saveLocationDB(loc));
       } else {
-        setCurrentUser(sanitizedUsers[0] || null);
+        setLocations(dbLocs);
       }
-    }
+    });
+
+    // 2. Subscribe to categories
+    const unsubCats = subscribeToCategories((dbCats) => {
+      if (dbCats.length === 0) {
+        Object.values(CATEGORIES).forEach(cat => saveCategoryDB(cat));
+      } else {
+        setCategories(dbCats);
+      }
+    });
+
+    // 3. Subscribe to users
+    const unsubUsers = subscribeToUsers((dbUsers) => {
+      if (dbUsers.length === 0) {
+        MOCK_USERS.forEach(user => saveUser(user));
+      } else {
+        setUsers(dbUsers);
+      }
+    });
+
+    // 4. Subscribe to tasks
+    const unsubTasks = subscribeToTasks((dbTasks) => {
+      if (dbTasks.length === 0) {
+        INITIAL_TASKS.forEach(task => createTaskDB(task));
+      } else {
+        setTasks(dbTasks);
+      }
+    });
+
+    // 5. Subscribe to Goal
+    const unsubGoal = subscribeToGoal((dbGoal) => {
+      setTeamGoal(dbGoal);
+    });
+
+    // Initial goal seeding wrapper
+    const checkGoal = async () => {
+      try {
+        const goalDocRef = doc(db, 'goals', 'teamGoal');
+        const goalSnap = await getDoc(goalDocRef);
+        if (!goalSnap.exists()) {
+          await saveGoalDB({ targetTasks: 10, rewardDescription: 'de verrassing van deze week!' });
+        }
+      } catch (e) {
+        console.error("Error setting up initial goal:", e);
+      }
+    };
+    checkGoal();
+
+    return () => {
+      unsubLocs();
+      unsubCats();
+      unsubUsers();
+      unsubTasks();
+      unsubGoal();
+    };
   }, []);
 
-  const saveTasksToStorage = (data: Task[]) => {
-    setTasks(data);
-    localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(data));
-  };
-
-  const saveUsersToStorage = (data: User[]) => {
-    setUsers(data);
-    localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(data));
-  };
-
-  const saveCategoriesToStorage = (data: CategoryInfo[]) => {
-    setCategories(data);
-    localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(data));
-  };
-
-  const saveLocationsToStorage = (data: LocationInfo[]) => {
-    setLocations(data);
-    localStorage.setItem(STORAGE_KEY_LOCATIONS, JSON.stringify(data));
-  };
+  // Sync active user sessions and updates with state changes
+  useEffect(() => {
+    const savedUserId = localStorage.getItem(STORAGE_KEY_LOGGED_IN);
+    if (savedUserId && users.length > 0) {
+      const foundUser = users.find((u: User) => u.id === savedUserId);
+      if (foundUser) {
+        setCurrentUser(foundUser);
+      }
+    }
+  }, [users]);
 
   // Change current user
   const handleUserSwitch = (userId: string) => {
@@ -208,36 +168,22 @@ export default function App() {
   // Gamification: Claim Task
   const handleClaimTask = (taskId: string, personName: string) => {
     if (!currentUser) return;
-    const updatedTasks = tasks.map(task => {
-      if (task.id === taskId) {
-        return {
-          ...task,
-          status: 'Claimed' as const,
-          claimedByUserId: currentUser.id,
-          claimedByName: personName,
-          claimedAt: new Date().toISOString()
-        };
-      }
-      return task;
+    updateTaskDB(taskId, {
+      status: 'Claimed' as const,
+      claimedByUserId: currentUser.id,
+      claimedByName: personName,
+      claimedAt: new Date().toISOString()
     });
-    saveTasksToStorage(updatedTasks);
   };
 
   // Release geclaimde taak
   const handleUnclaimTask = (taskId: string) => {
-    const updatedTasks = tasks.map(task => {
-      if (task.id === taskId) {
-        return {
-          ...task,
-          status: 'Open' as const,
-          claimedByUserId: undefined,
-          claimedByName: undefined,
-          claimedAt: undefined
-        };
-      }
-      return task;
+    updateTaskDB(taskId, {
+      status: 'Open' as const,
+      claimedByUserId: undefined,
+      claimedByName: undefined,
+      claimedAt: undefined
     });
-    saveTasksToStorage(updatedTasks);
   };
 
   // Completing Task with Gamification rewards and Cheer triggers
@@ -248,70 +194,60 @@ export default function App() {
     const randomCheer = CHEER_MESSAGES[Math.floor(Math.random() * CHEER_MESSAGES.length)];
     
     // 1. Update task record
-    const updatedTasks = tasks.map(task => {
-      if (task.id === taskId) {
-        if (task.googleTaskId && isGoogleSignedIn) {
-           getAccessToken().then(token => {
-             if (token) completeGoogleTask(token, task.googleTaskId!);
-           });
-        }
-        return {
-          ...task,
-          status: 'Completed' as const,
-          completedByUserId: currentUser.id,
-          completedByName: finalName,
-          completedAt: new Date().toISOString(),
-          cheerMessage: randomCheer
-        };
-      }
-      return task;
+    if (taskObj?.googleTaskId && isGoogleSignedIn) {
+       getAccessToken().then(token => {
+         if (token) completeGoogleTask(token, taskObj.googleTaskId!);
+       });
+    }
+
+    updateTaskDB(taskId, {
+      status: 'Completed' as const,
+      completedByUserId: currentUser.id,
+      completedByName: finalName,
+      completedAt: new Date().toISOString(),
+      cheerMessage: randomCheer
     });
-    saveTasksToStorage(updatedTasks);
 
     // 2. Add points for the worker to boost Motivation!
-    const updatedUsers = users.map(user => {
-      if (user.id === currentUser.id) {
-        const premiumAddition = 15; // +15 Points
-        const newPoints = (user.points || 0) + premiumAddition;
+    const targetUser = users.find(u => u.uid === currentUser.id || u.id === currentUser.id);
+    if (targetUser) {
+      const premiumAddition = 15; // +15 Points
+      const newPoints = (targetUser.points || 0) + premiumAddition;
 
-        // Streak logic
-        const todayStr = new Date().toDateString();
-        let newStreak = user.streakCount || 0;
-        
-        if (user.lastCompletedDate) {
-          const lastDateStr = new Date(user.lastCompletedDate).toDateString();
-          if (lastDateStr !== todayStr) {
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            if (lastDateStr === yesterday.toDateString()) {
-              newStreak += 1;
-            } else {
-              newStreak = 1;
-            }
+      // Streak logic
+      const todayStr = new Date().toDateString();
+      let newStreak = targetUser.streakCount || 0;
+      
+      if (targetUser.lastCompletedDate) {
+        const lastDateStr = new Date(targetUser.lastCompletedDate).toDateString();
+        if (lastDateStr !== todayStr) {
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          if (lastDateStr === yesterday.toDateString()) {
+            newStreak += 1;
+          } else {
+            newStreak = 1;
           }
-        } else {
-          newStreak = 1;
         }
-
-        const updatedUserData = { 
-          ...user, 
-          points: newPoints,
-          streakCount: newStreak,
-          lastCompletedDate: new Date().toISOString()
-        };
-        
-        if (currentUser.id === user.id) setCurrentUser(updatedUserData);
-        return updatedUserData;
+      } else {
+        newStreak = 1;
       }
-      return user;
-    });
-    saveUsersToStorage(updatedUsers);
+
+      const updatedUserData = { 
+        ...targetUser, 
+        points: newPoints,
+        streakCount: newStreak,
+        lastCompletedDate: new Date().toISOString()
+      };
+      
+      saveUser(updatedUserData);
+    }
+    
     setConfettiTrigger(prev => prev + 1);
   };
 
   const handleEditTask = (taskId: string, data: Partial<Task>) => {
-    const updatedTasks = tasks.map(t => t.id === taskId ? { ...t, ...data } : t);
-    saveTasksToStorage(updatedTasks);
+    updateTaskDB(taskId, data);
   };
 
   const handleCreateTask = async (taskData: Omit<Task, 'id' | 'createdByUserId' | 'createdByName' | 'createdAt'>, creatorName: string) => {
@@ -332,11 +268,7 @@ export default function App() {
       }
     }
 
-    setTasks(prev => {
-      const updated = [newTask, ...prev];
-      localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(updated));
-      return updated;
-    });
+    createTaskDB(newTask);
 
     const admins = users.filter(u => u.role === 'Beheerder' || u.role === 'Manager');
     if (admins.length > 0) {
@@ -346,7 +278,7 @@ export default function App() {
   };
 
   const handleDeleteTask = (taskId: string) => {
-    saveTasksToStorage(tasks.filter(t => t.id !== taskId));
+    deleteTaskDB(taskId);
   };
 
   // User Management
@@ -354,54 +286,71 @@ export default function App() {
     const newUser = 'id' in user 
       ? user 
       : { ...user, id: `user-${Date.now()}`, points: 0, hearts: 0 };
-    saveUsersToStorage([...users, newUser as User]);
+    saveUser(newUser as User);
   };
   const handleUpdateUser = (id: string, data: Partial<User>) => {
-    const updated = users.map(u => u.id === id ? { ...u, ...data } : u);
-    saveUsersToStorage(updated);
-    if (currentUser?.id === id) setCurrentUser({ ...currentUser, ...data } as User);
+    const target = users.find(u => u.id === id);
+    if (target) {
+      saveUser({ ...target, ...data } as User);
+    }
   };
   const handleDeleteUser = (id: string) => {
-    saveUsersToStorage(users.filter(u => u.id !== id));
+    deleteUserDB(id);
   };
   const handleSendHeart = (id: string) => {
-    const updated = users.map(u => u.id === id ? { ...u, hearts: (u.hearts || 0) + 1 } : u);
-    saveUsersToStorage(updated);
-    setConfettiTrigger(prev => prev + 1);
+    const target = users.find(u => u.id === id);
+    if (target) {
+      saveUser({ ...target, hearts: (target.hearts || 0) + 1 });
+      setConfettiTrigger(prev => prev + 1);
+    }
   };
 
   // Category & Location Management
-  const handleAddCategory = (cat: CategoryInfo) => saveCategoriesToStorage([...categories, cat]);
-  const handleDeleteCategory = (type: string) => saveCategoriesToStorage(categories.filter(c => c.type !== type));
+  const handleAddCategory = (cat: CategoryInfo) => saveCategoryDB(cat);
+  const handleDeleteCategory = (type: string) => deleteCategoryDB(type);
   const handleAddLocation = (name: string) => {
     const newLoc = { id: `loc-${Date.now()}`, name, groups: ['Boventallig / Algemeen'] };
-    saveLocationsToStorage([...locations, newLoc]);
+    saveLocationDB(newLoc);
   };
-  const handleDeleteLocation = (id: string) => {
-    saveLocationsToStorage(locations.filter(l => l.id !== id));
-  };
+  const handleDeleteLocation = (id: string) => deleteLocationDB(id);
   const handleUpdateLocation = (id: string, name: string, groups?: string[]) => {
-    saveLocationsToStorage(locations.map(l => l.id === id ? { ...l, name, groups: groups !== undefined ? groups : l.groups } : l));
+    const target = locations.find(l => l.id === id);
+    if (target) {
+      saveLocationDB({ ...target, name, groups: groups !== undefined ? groups : target.groups });
+    }
   };
   const handleUpdateGoal = (targetTasks: number, rewardDescription: string) => {
-    const newGoal = { targetTasks, rewardDescription };
-    setTeamGoal(newGoal);
-    localStorage.setItem(STORAGE_KEY_GOAL, JSON.stringify(newGoal));
+    saveGoalDB({ targetTasks, rewardDescription });
   };
 
   // Dev Reset
-  const handleResetData = () => {
-    localStorage.removeItem(STORAGE_KEY_TASKS);
-    localStorage.removeItem(STORAGE_KEY_USERS);
-    localStorage.removeItem(STORAGE_KEY_LOGGED_IN);
-    localStorage.removeItem(STORAGE_KEY_CATEGORIES);
-    localStorage.removeItem(STORAGE_KEY_LOCATIONS);
-    setTasks(INITIAL_TASKS);
-    setUsers(MOCK_USERS);
-    setCurrentUser(MOCK_USERS[0]);
-    setCategories(Object.values(CATEGORIES));
-    setLocations(LOCATIONS);
-    alert('Gegevens zijn hersteld naar de begintoestand! 🔄');
+  const handleResetData = async () => {
+    if (window.confirm('Weet u zeker dat u alle gegevens in de cloud-database wilt herstellen naar de begintoestand? 🔄')) {
+      try {
+        for (const task of tasks) {
+          await deleteTaskDB(task.id);
+        }
+        for (const user of users) {
+          await deleteUserDB(user.id);
+        }
+        for (const loc of locations) {
+          await deleteLocationDB(loc.id);
+        }
+        for (const cat of categories) {
+          await deleteCategoryDB(cat.type);
+        }
+        
+        LOCATIONS.forEach(loc => saveLocationDB(loc));
+        Object.values(CATEGORIES).forEach(cat => saveCategoryDB(cat));
+        MOCK_USERS.forEach(user => saveUser(user));
+        INITIAL_TASKS.forEach(task => createTaskDB(task));
+        await saveGoalDB({ targetTasks: 10, rewardDescription: 'de verrassing van deze week!' });
+        
+        alert('Gegevens zijn hersteld naar de begintoestand! 🔄');
+      } catch (e) {
+        alert('Fout bij herstellen: ' + e);
+      }
+    }
   };
 
   if (!currentUser) {
