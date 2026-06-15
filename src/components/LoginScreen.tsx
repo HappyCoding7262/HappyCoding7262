@@ -26,6 +26,7 @@ export default function LoginScreen({ users, locations, onLogin, onRegister }: L
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regRole, setRegRole] = useState<Role>('Leidster');
+  const [regAccessCode, setRegAccessCode] = useState('');
   const [regAvatar, setRegAvatar] = useState('😊');
   const [regLocationId, setRegLocationId] = useState(locations[0]?.id || '');
   const [regGroupId, setRegGroupId] = useState('Boventallig / Algemeen');
@@ -77,6 +78,18 @@ export default function LoginScreen({ users, locations, onLogin, onRegister }: L
       return;
     }
 
+    // Role code validation
+    if (regRole !== 'Leidster') {
+      if (!regAccessCode.trim()) {
+        setRegError('Voer de toegangscode in om te registreren met beheer- of manager-rechten.');
+        return;
+      }
+      if (regAccessCode.trim().toUpperCase() !== 'ARK2026') {
+        setRegError('Onjuiste toegangscode voor de geselecteerde rol.');
+        return;
+      }
+    }
+
     // Check if email already exists
     const emailExist = users.some(u => u.email?.toLowerCase().trim() === regEmail.toLowerCase().trim());
     if (emailExist) {
@@ -95,8 +108,8 @@ export default function LoginScreen({ users, locations, onLogin, onRegister }: L
       role: regRole,
       avatar: regAvatar,
       bio: regRole === 'Beheerder' ? 'Systeembeheerder' : regRole === 'Manager' ? 'Locatiemanager' : 'Pedagogisch Medewerker',
-      locationId: regLocationId,
-      groupId: regGroupId,
+      locationId: regLocationId || '',
+      groupId: regGroupId || 'Boventallig / Algemeen',
       points: 0,
       streakCount: 0,
       hearts: 0
@@ -263,46 +276,85 @@ export default function LoginScreen({ users, locations, onLogin, onRegister }: L
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <div className="space-y-1.5">
-                <label className="text-xs uppercase font-bold text-brand-gray-light tracking-wider flex items-center gap-1.5">
-                  Dagelijkse Locatie
-                </label>
-                <select
-                  value={regLocationId}
-                  onChange={e => {
-                    const locId = e.target.value;
-                    setRegLocationId(locId);
-                    const lObj = locations.find(l => l.id === locId);
-                    if (lObj && lObj.groups.length > 0) {
-                      setRegGroupId(lObj.groups[0]);
-                    } else {
-                      setRegGroupId('Boventallig / Algemeen');
-                    }
-                  }}
-                  className="w-full px-4 py-3 border border-brand-border rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-brand-peach text-xs font-bold text-brand-gray"
-                >
-                  {locations.map(loc => (
-                    <option key={loc.id} value={loc.id}>{loc.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs uppercase font-bold text-brand-gray-light tracking-wider flex items-center gap-1.5">
-                  Actieve Groep
-                </label>
-                <select
-                  value={regGroupId}
-                  onChange={e => setRegGroupId(e.target.value)}
-                  className="w-full px-4 py-3 border border-brand-border rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-brand-peach text-xs font-bold text-brand-gray"
-                >
-                  {availableGroups.map(grp => (
-                    <option key={grp} value={grp}>{grp}</option>
-                  ))}
-                </select>
-              </div>
+            <div className="space-y-1.5">
+              <label className="text-xs uppercase font-bold text-brand-gray-light tracking-wider flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-brand-peach" /> Functie / Rol *
+              </label>
+              <select
+                value={regRole}
+                onChange={e => {
+                  setRegRole(e.target.value as Role);
+                  setRegError('');
+                }}
+                className="w-full px-5 py-3 border border-brand-border rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-brand-peach text-sm font-medium text-brand-gray"
+              >
+                <option value="Leidster">Leidster (Pedagogisch Medewerker)</option>
+                <option value="Manager">Manager (Locatieleider)</option>
+                <option value="Beheerder">Beheerder (Systeembeheerder)</option>
+              </select>
             </div>
+
+            {regRole !== 'Leidster' && (
+              <div className="space-y-1.5 animate-pulse-subtle bg-amber-50/50 p-4 rounded-3xl border border-amber-100/60">
+                <label className="text-xs uppercase font-bold text-amber-850 tracking-wider flex items-center gap-1.5">
+                  <Key className="w-4 h-4 text-amber-500" /> Toegangscode *
+                </label>
+                <input
+                  type="password"
+                  value={regAccessCode}
+                  onChange={e => setRegAccessCode(e.target.value)}
+                  placeholder="Voer de toegangscode in..."
+                  className="w-full px-5 py-3 bg-white border border-brand-border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-peach text-sm font-medium"
+                  required
+                />
+                <span className="text-[10px] text-brand-gray-light pl-2 block mt-1">
+                  Tip: gebruik beheerdercode <span className="font-bold text-brand-olive select-all">ARK2026</span> om deze rol te activeren.
+                </span>
+              </div>
+            )}
+
+            {locations.length > 0 && (
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div className="space-y-1.5">
+                  <label className="text-xs uppercase font-bold text-brand-gray-light tracking-wider flex items-center gap-1.5">
+                    Dagelijkse Locatie
+                  </label>
+                  <select
+                    value={regLocationId}
+                    onChange={e => {
+                      const locId = e.target.value;
+                      setRegLocationId(locId);
+                      const lObj = locations.find(l => l.id === locId);
+                      if (lObj && lObj.groups.length > 0) {
+                        setRegGroupId(lObj.groups[0]);
+                      } else {
+                        setRegGroupId('Boventallig / Algemeen');
+                      }
+                    }}
+                    className="w-full px-4 py-3 border border-brand-border rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-brand-peach text-xs font-bold text-brand-gray"
+                  >
+                    {locations.map(loc => (
+                      <option key={loc.id} value={loc.id}>{loc.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs uppercase font-bold text-brand-gray-light tracking-wider flex items-center gap-1.5">
+                    Actieve Groep
+                  </label>
+                  <select
+                    value={regGroupId}
+                    onChange={e => setRegGroupId(e.target.value)}
+                    className="w-full px-4 py-3 border border-brand-border rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-brand-peach text-xs font-bold text-brand-gray"
+                  >
+                    {availableGroups.map(grp => (
+                      <option key={grp} value={grp}>{grp}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2 pt-1">
               <label className="text-xs uppercase font-bold text-brand-gray-light tracking-wider block">

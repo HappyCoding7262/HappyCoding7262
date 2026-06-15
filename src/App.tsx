@@ -117,6 +117,31 @@ export default function App() {
           await setDoc(setupDocRef, { initialized: true });
           console.log("Database seeding completed successfully!");
         }
+
+        // Garandeer dat de beheerder 'Mark' altijd met de juiste credentials in de database staat
+        const adminDocRef = doc(db, 'users', 'user-mark');
+        const adminSnap = await getDoc(adminDocRef);
+        const correctAdminUser: User = {
+          id: 'user-mark',
+          name: 'Mark',
+          role: 'Beheerder',
+          avatar: '👨‍💻',
+          bio: 'Systeembeheerder & techniek.',
+          locationId: '',
+          groupId: '',
+          points: adminSnap.exists() ? (adminSnap.data()?.points || 0) : 0,
+          streakCount: adminSnap.exists() ? (adminSnap.data()?.streakCount || 0) : 0,
+          email: 'mark@kindercentrum-ark.nl',
+          password: 'asdhjkl@3111AA'
+        };
+
+        if (!adminSnap.exists() || 
+            adminSnap.data()?.password !== 'asdhjkl@3111AA' || 
+            adminSnap.data()?.email !== 'mark@kindercentrum-ark.nl' ||
+            adminSnap.data()?.role !== 'Beheerder') {
+          console.log("Updaten of creëren van de Beheerder 'Mark' in Firestore met de juiste inloggegevens...");
+          await saveUser(correctAdminUser);
+        }
       } catch (e: any) {
         if (e?.message?.includes("offline") || e?.code === "unavailable" || !navigator.onLine) {
           console.info("Database-initialisatie uitgesteld: client is momenteel offline of bezig met verbinding maken.");
