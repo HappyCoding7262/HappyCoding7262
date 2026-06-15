@@ -115,9 +115,33 @@ export default function TaskCard({
       layout
       id={`task-card-${task.id}`}
       initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={task.status === 'Open' ? {
+        opacity: 1,
+        y: 0,
+        boxShadow: ["0px 1px 3px rgba(0,0,0,0.05)", "0px 6px 20px rgba(100,116,139,0.12)", "0px 1px 3px rgba(0,0,0,0.05)"],
+        scale: [1, 1.008, 1]
+      } : {
+        opacity: 1,
+        y: 0,
+        boxShadow: "0px 1px 3px rgba(0,0,0,0.05)",
+        scale: 1
+      }}
       exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.3 }}
+      transition={task.status === 'Open' ? {
+        boxShadow: {
+          duration: 3,
+          repeat: Infinity,
+          ease: "easeInOut"
+        },
+        scale: {
+          duration: 3,
+          repeat: Infinity,
+          ease: "easeInOut"
+        },
+        default: { duration: 0.3 }
+      } : {
+        duration: 0.3
+      }}
       className={`relative overflow-hidden bg-white border rounded-[32px] shadow-sm transition-all duration-300 ${
         task.status === 'Completed' 
           ? 'border-brand-sage bg-brand-sage-lighter shadow-none' 
@@ -132,14 +156,24 @@ export default function TaskCard({
           ? 'bg-brand-sage' 
           : task.status === 'Claimed' 
           ? 'bg-brand-peach' 
-          : 'bg-brand-gray-light'
+          : 'bg-brand-gray-light bg-emerald-500/80'
       }`} />
 
       <div className="p-5 sm:p-6">
         {/* Header tags */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
           <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-[0.1em] px-4 py-1.5 rounded-full border ${categoryInfo.color}`}>
+            {task.status === 'Open' && (
+              <span className="inline-flex items-center gap-1.5 text-[8px] xs:text-[10px] uppercase font-black tracking-[0.1em] px-3 py-1.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800 shadow-xs">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                Open 📣
+              </span>
+            )}
+
+            <span className={`inline-flex items-center gap-1.5 text-[8px] xs:text-[10px] uppercase font-bold tracking-[0.1em] px-3.5 py-1.5 rounded-full border ${categoryInfo.color}`}>
               <IconComponent className="w-3.5 h-3.5" />
               {categoryInfo.label}
             </span>
