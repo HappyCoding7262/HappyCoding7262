@@ -396,6 +396,7 @@ export default function StaffDashboard({
                   onUnclaim={onUnclaim}
                   onComplete={onComplete}
                   onEdit={setEditingTask}
+                  onUpdateTask={onEditTask}
                 />
               ))
             ) : (

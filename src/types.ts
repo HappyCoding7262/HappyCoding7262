@@ -68,6 +68,17 @@ export interface Task {
   
   // Google Tasks integration
   googleTaskId?: string;
+
+  // Track file and photo attachments
+  attachments?: Attachment[];
+}
+
+export interface Attachment {
+  id: string;
+  name: string;
+  url: string; // base64 encoded data url
+  type: 'image' | 'file';
+  createdAt: string;
 }
 
 export interface TeamGoal {

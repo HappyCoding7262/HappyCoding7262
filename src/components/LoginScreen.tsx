@@ -116,8 +116,8 @@ export default function LoginScreen({ users, locations, onLogin, onRegister }: L
   };
 
   return (
-    <div className="min-h-screen bg-brand-bg flex items-center justify-center p-4 sm:p-8 selection:bg-brand-peach/30">
-      <div className="max-w-xl w-full bg-white rounded-[32px] p-6 sm:p-10 shadow-xl border border-brand-border duration-300">
+    <div className="min-h-screen bg-brand-bg flex items-center justify-center p-1.5 xs:p-3 sm:p-8 selection:bg-brand-peach/30">
+      <div className="max-w-xl w-[98%] sm:w-full bg-white rounded-[32px] p-5 sm:p-10 shadow-xl border border-brand-border duration-300">
         
         {/* Brand header */}
         <div className="text-center mb-8">

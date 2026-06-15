@@ -575,6 +575,7 @@ export default function ManagerDashboard({
                     onComplete={onComplete}
                     onEdit={setEditingTask}
                     onDelete={onDeleteTask}
+                    onUpdateTask={onEditTask}
                   />
                 ))}
               </div>
@@ -742,6 +743,7 @@ export default function ManagerDashboard({
                     onComplete={onComplete}
                     onEdit={setEditingTask}
                     onDelete={onDeleteTask}
+                    onUpdateTask={onEditTask}
                   />
                 ))}
               </div>

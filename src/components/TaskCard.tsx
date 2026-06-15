@@ -21,9 +21,16 @@ import {
   Flame,
   Award,
   Edit2,
-  Tag
+  Tag,
+  Paperclip,
+  Download,
+  Eye,
+  Camera,
+  X,
+  FileText
 } from 'lucide-react';
 import { Task, CategoryType, PriorityType, User as UserType, CategoryInfo, LocationInfo } from '../types';
+import AttachmentManager from './AttachmentManager';
 
 interface TaskCardProps {
   key?: string | number;
@@ -36,6 +43,7 @@ interface TaskCardProps {
   onComplete: (taskId: string) => void;
   onEdit?: (task: Task) => void;
   onDelete?: (taskId: string) => void; // Managers only
+  onUpdateTask?: (taskId: string, data: Partial<Task>) => void;
 }
 
 // Map strings to Lucide components
@@ -56,7 +64,8 @@ export default function TaskCard({
   onUnclaim, 
   onComplete, 
   onEdit,
-  onDelete 
+  onDelete,
+  onUpdateTask
 }: TaskCardProps) {
   const categoryInfo = categories.find(c => c.type === task.category) || {
     type: task.category,
@@ -71,6 +80,9 @@ export default function TaskCard({
   const dragConstraintsRef = useRef<HTMLDivElement>(null);
   const [isSuccessfullySwiped, setIsSuccessfullySwiped] = useState(false);
   const dragX = useMotionValue(0);
+  
+  const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null);
+  const [isAddingAttachments, setIsAddingAttachments] = useState(false);
   
   // Map drag position to background opacity / colors
   const opacity = useTransform(dragX, [0, 160], [0.1, 0.95]);
@@ -174,6 +186,70 @@ export default function TaskCard({
           </p>
         </div>
 
+        {/* Task Attachments Display */}
+        {task.attachments && task.attachments.length > 0 && (
+          <div className="mb-5 space-y-2">
+            <h4 className="text-[10px] uppercase font-bold tracking-[0.1em] text-brand-gray-light flex items-center gap-1.5 mb-2">
+              <Paperclip className="w-3.5 h-3.5" />
+              Bijlagen & Foto's ({task.attachments.length})
+            </h4>
+            <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 gap-2">
+              {task.attachments.map((att) => (
+                <div 
+                  key={att.id} 
+                  className="relative group border border-brand-border rounded-[16px] aspect-square overflow-hidden bg-brand-bg flex flex-col justify-between"
+                >
+                  {att.type === 'image' ? (
+                    <>
+                      <img 
+                        src={att.url} 
+                        alt={att.name} 
+                        className="w-full h-full object-cover" 
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setActiveLightboxImage(att.url)}
+                          className="p-1.5 bg-white rounded-full text-brand-gray-dark hover:bg-brand-bg transition"
+                          title="Bekijken"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <a
+                          href={att.url}
+                          download={att.name}
+                          className="p-1.5 bg-white rounded-full text-brand-gray-dark hover:bg-brand-bg transition"
+                          title="Downloaden"
+                        >
+                          <Download className="w-4 h-4" />
+                        </a>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center p-3 text-center">
+                      <FileText className="w-7 h-7 text-brand-gray-light mb-1" />
+                      <span className="text-[10px] font-semibold text-brand-gray-dark truncate w-full" title={att.name}>
+                        {att.name}
+                      </span>
+                      <a
+                        href={att.url}
+                        download={att.name}
+                        className="mt-1 px-2 py-0.5 bg-white border border-brand-border rounded-full text-[8px] font-bold text-brand-gray-dark hover:bg-brand-bg hover:border-brand-gray-light transition flex items-center gap-1"
+                      >
+                        <Download className="w-2.5 h-2.5" /> Download
+                      </a>
+                    </div>
+                  )}
+
+                  <div className="absolute bottom-0 inset-x-0 bg-white/95 border-t border-brand-border py-1 px-2 text-[8px] font-semibold text-brand-gray truncate">
+                    {att.name}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Meta Indicators (Location, Group, Author) */}
         <div className="flex flex-col sm:flex-row gap-4 py-4 rounded-[24px] bg-brand-bg px-5 mb-5 text-xs text-brand-gray border border-brand-border">
           <div className="flex items-center gap-2 flex-wrap">
@@ -237,6 +313,37 @@ export default function TaskCard({
             {/* Slide to Complete Mechanism (Me-only interactive) */}
             {isClaimedByMe ? (
               <div className="space-y-4">
+                {/* Inline attachment captured drawer on the card */}
+                {onUpdateTask && (
+                  <div className="bg-brand-bg p-3.5 rounded-[24px] border border-brand-border space-y-3 shadow-inner">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] uppercase font-bold tracking-[0.1em] text-brand-gray flex items-center gap-1.5">
+                        <Camera className="w-3.5 h-3.5 text-brand-olive animate-bounce" />
+                        In-situ foto of bijlage toevoegen 📸
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingAttachments(!isAddingAttachments)}
+                        className="text-xs font-bold text-brand-olive hover:text-brand-gray-dark underline cursor-pointer"
+                      >
+                        {isAddingAttachments ? 'Sluiten' : 'Toevoegen'}
+                      </button>
+                    </div>
+
+                    {isAddingAttachments && (
+                      <div className="pt-2 border-t border-brand-border/40">
+                        <AttachmentManager
+                          attachments={task.attachments || []}
+                          onChange={(newAttachments) => {
+                            onUpdateTask(task.id, { attachments: newAttachments });
+                          }}
+                          label="Foto's of documenten"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <p className="text-[10px] uppercase font-bold tracking-[0.1em] text-center text-brand-peach animate-pulse flex items-center justify-center gap-2">
                   Swipe naar rechts om af te ronden <ChevronRight className="w-4 h-4" />
                 </p>
@@ -302,6 +409,32 @@ export default function TaskCard({
         )}
 
       </div>
+
+      {/* Lightbox Modal */}
+      {activeLightboxImage && (
+        <div 
+          className="fixed inset-0 bg-slate-900/80 backdrop-blur-xs flex items-center justify-center p-4 z-[9999]"
+          onClick={() => setActiveLightboxImage(null)}
+        >
+          <div 
+            className="relative max-w-4xl max-h-[85vh] overflow-hidden rounded-[24px] bg-white border border-brand-border shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setActiveLightboxImage(null)}
+              className="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white cursor-pointer transition z-50 shadow-md"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <img 
+              src={activeLightboxImage} 
+              alt="Bijlage preview" 
+              className="max-w-full max-h-[80vh] object-contain block mx-auto" 
+            />
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

@@ -5,7 +5,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Sparkles, FolderClosed, ClipboardList, Compass, MessageCircle, Plus, X, Tag } from 'lucide-react';
-import { CategoryType, PriorityType, Task, CategoryInfo, LocationInfo, User } from '../types';
+import { CategoryType, PriorityType, Task, CategoryInfo, LocationInfo, User, Attachment } from '../types';
+import AttachmentManager from './AttachmentManager';
 
 interface TaskFormProps {
   currentLocationId: string;
@@ -32,6 +33,7 @@ export default function TaskForm({ currentLocationId, locations, categories, use
   const currentLocationObj = locations.find(loc => loc.id === selectedLocationId) || locations[0];
   const [selectedGroup, setSelectedGroup] = useState(initialTask?.groupId || currentLocationObj?.groups[0] || 'Boventallig / Algemeen');
   const [selectedAssignee, setSelectedAssignee] = useState(initialTask?.claimedByUserId || 'unassigned');
+  const [attachments, setAttachments] = useState<Attachment[]>(initialTask?.attachments || []);
 
   const handleLocationChange = (locId: string) => {
     setSelectedLocationId(locId);
@@ -83,7 +85,8 @@ export default function TaskForm({ currentLocationId, locations, categories, use
         status,
         claimedByUserId,
         claimedByName,
-        claimedAt
+        claimedAt,
+        attachments
       });
     } else {
       onAddTask({
@@ -96,7 +99,8 @@ export default function TaskForm({ currentLocationId, locations, categories, use
         status,
         claimedByUserId,
         claimedByName,
-        claimedAt
+        claimedAt,
+        attachments
       }, creatorName.trim());
     }
     
@@ -286,6 +290,15 @@ export default function TaskForm({ currentLocationId, locations, categories, use
                 );
               })}
             </div>
+          </div>
+
+          {/* Attachments Section */}
+          <div className="border-t border-brand-border pt-5">
+            <AttachmentManager
+              attachments={attachments}
+              onChange={setAttachments}
+              label="Bijlagen & Foto's"
+            />
           </div>
 
           {/* Buttons */}

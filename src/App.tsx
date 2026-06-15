@@ -381,7 +381,7 @@ export default function App() {
 
       {/* Primary Site Header & Brand element */}
       <header className="bg-white border-b border-brand-border sticky top-0 z-40">
-        <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+        <div className="w-[98%] sm:w-full max-w-5xl mx-auto px-1.5 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           
           {/* Logo brand and subtitle */}
           <div className="flex items-center gap-3">
@@ -436,7 +436,7 @@ export default function App() {
       </header>
 
       {/* Main Body Grid */}
-      <main className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <main className="w-[98%] sm:w-full max-w-5xl mx-auto px-1.5 sm:px-6 lg:px-8 py-8 space-y-8">
         
         {/* Interactive Shared Team Goal Progress Banner */}
         <section className="bg-brand-olive text-white rounded-[32px] p-6 shadow-sm relative overflow-hidden" id="shared-progress-section">
