@@ -40,9 +40,15 @@ export default function SettingsScreen({ categories, locations, teamGoal, onAddC
 
   const saveLocation = () => {
     if (editingLocId && editingLocName.trim()) {
-      onUpdateLocation(editingLocId, editingLocName.trim(), editingLocGroups);
+      let finalGroups = [...editingLocGroups];
+      const trimmedGroup = newGroupName.trim();
+      if (trimmedGroup && !finalGroups.includes(trimmedGroup)) {
+        finalGroups.push(trimmedGroup);
+      }
+      onUpdateLocation(editingLocId, editingLocName.trim(), finalGroups);
     }
     setEditingLocId(null);
+    setNewGroupName('');
   };
 
   const handleAddGroupToLocation = () => {
@@ -100,10 +106,20 @@ export default function SettingsScreen({ categories, locations, teamGoal, onAddC
           <input 
             value={newLocName}
             onChange={e => setNewLocName(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                if (newLocName.trim()) {
+                  onAddLocation(newLocName.trim());
+                  setNewLocName('');
+                }
+              }
+            }}
             placeholder="Nieuwe locatie naam..."
             className="flex-1 px-5 py-3 border border-brand-border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-peach text-sm"
           />
           <button 
+            type="button"
             onClick={() => {
               if (newLocName.trim()) {
                 onAddLocation(newLocName.trim());
@@ -125,11 +141,17 @@ export default function SettingsScreen({ categories, locations, teamGoal, onAddC
                     <input 
                       value={editingLocName}
                       onChange={e => setEditingLocName(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          saveLocation();
+                        }
+                      }}
                       className="flex-1 px-4 py-2 border rounded-full text-sm"
                       placeholder="Naam locatie"
                     />
-                    <button onClick={saveLocation} className="px-4 bg-brand-sage text-white rounded-full text-sm font-bold">Opslaan</button>
-                    <button onClick={() => setEditingLocId(null)} className="px-4 text-brand-gray">X</button>
+                    <button type="button" onClick={saveLocation} className="px-4 bg-brand-sage text-white rounded-full text-sm font-bold">Opslaan</button>
+                    <button type="button" onClick={() => setEditingLocId(null)} className="px-4 text-brand-gray">X</button>
                   </div>
                   
                   <div className="bg-white p-4 rounded-[16px] border border-brand-border">
@@ -148,11 +170,16 @@ export default function SettingsScreen({ categories, locations, teamGoal, onAddC
                       <input 
                         value={newGroupName}
                         onChange={e => setNewGroupName(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && handleAddGroupToLocation()}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddGroupToLocation();
+                          }
+                        }}
                         placeholder="Nieuwe groep..."
                         className="flex-1 px-3 py-1.5 border rounded-full text-sm"
                       />
-                      <button onClick={handleAddGroupToLocation} className="px-3 bg-brand-gray-dark text-white rounded-full text-xs font-bold">
+                      <button type="button" onClick={handleAddGroupToLocation} className="px-3 bg-brand-gray-dark text-white rounded-full text-xs font-bold">
                         Voeg toe
                       </button>
                     </div>
@@ -202,10 +229,17 @@ export default function SettingsScreen({ categories, locations, teamGoal, onAddC
           <input 
             value={newCatLabel}
             onChange={e => setNewCatLabel(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAddCategory();
+              }
+            }}
             placeholder="Nieuwe categorie naam..."
             className="flex-1 px-5 py-3 border border-brand-border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-peach text-sm"
           />
           <button 
+            type="button"
             onClick={handleAddCategory}
             className="px-6 py-3 bg-brand-gray-dark text-white rounded-full font-bold flex items-center gap-2 hover:bg-black"
           >

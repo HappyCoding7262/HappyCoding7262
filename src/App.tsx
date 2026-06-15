@@ -334,7 +334,7 @@ export default function App() {
     saveLocationsToStorage(locations.filter(l => l.id !== id));
   };
   const handleUpdateLocation = (id: string, name: string, groups?: string[]) => {
-    saveLocationsToStorage(locations.map(l => l.id === id ? { ...l, name, groups: groups || l.groups } : l));
+    saveLocationsToStorage(locations.map(l => l.id === id ? { ...l, name, groups: groups !== undefined ? groups : l.groups } : l));
   };
   const handleUpdateGoal = (targetTasks: number, rewardDescription: string) => {
     const newGoal = { targetTasks, rewardDescription };
