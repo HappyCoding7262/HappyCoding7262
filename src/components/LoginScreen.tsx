@@ -392,9 +392,6 @@ export default function LoginScreen({ users, locations, onLogin, onRegister, onR
                   className="w-full px-5 py-3 bg-white border border-brand-border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-peach text-sm font-medium"
                   required
                 />
-                <span className="text-[10px] text-brand-gray-light pl-2 block mt-1">
-                  Tip: gebruik beheerdercode <span className="font-bold text-brand-olive select-all">ARK2026</span> om deze rol te activeren.
-                </span>
               </div>
             )}
 
@@ -531,9 +528,6 @@ export default function LoginScreen({ users, locations, onLogin, onRegister, onR
                 className="w-full px-5 py-3.5 border border-brand-border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-peach text-sm font-medium"
                 required
               />
-              <span className="text-[10px] text-brand-gray-light pl-2 block mt-1">
-                Tip: ter herbeveiliging is de beheerdercode vereist (gebruik <span className="font-bold text-brand-olive select-all">ARK2026</span>).
-              </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
