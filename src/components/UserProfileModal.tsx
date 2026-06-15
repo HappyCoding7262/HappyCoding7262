@@ -25,7 +25,7 @@ export default function UserProfileModal({ user, onSave, onClose, onLogout }: Us
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-[1000] overflow-y-auto">
       <div 
-        className="bg-white rounded-[32px] shadow-xl w-full max-w-md overflow-hidden border border-brand-border flex flex-col my-8 animate-in fade-in zoom-in-95 duration-200"
+        className="bg-white rounded-[32px] shadow-xl w-full max-w-md max-h-[calc(100vh-32px)] overflow-hidden border border-brand-border flex flex-col my-auto animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="bg-brand-gray-dark px-8 py-6 flex items-center justify-between text-white">

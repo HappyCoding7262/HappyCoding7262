@@ -123,7 +123,7 @@ export default function TaskForm({ currentLocationId, locations, categories, use
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-[1000] overflow-y-auto" id="task-form-overlay">
       <div 
-        className="bg-white rounded-[32px] shadow-xl w-full max-w-lg overflow-hidden border border-brand-border flex flex-col my-8 animate-in fade-in zoom-in-95 duration-200"
+        className="bg-white rounded-[32px] shadow-xl w-full max-w-lg max-h-[calc(100vh-32px)] overflow-hidden border border-brand-border flex flex-col my-auto animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -154,7 +154,7 @@ export default function TaskForm({ currentLocationId, locations, categories, use
                 placeholder="Je voornaam..."
                 value={creatorName}
                 onChange={(e) => setCreatorName(e.target.value)}
-                className="w-full px-5 py-4 rounded-full border border-brand-border bg-brand-bg focus:outline-none focus:ring-2 focus:ring-brand-peach/50 text-sm font-medium text-brand-gray-dark placeholder-brand-gray-light transition"
+                className="w-full px-5 py-4 rounded-full border border-brand-border bg-brand-bg focus:outline-none focus:ring-2 focus:ring-brand-peach focus:border-brand-peach focus:bg-white text-sm font-medium text-brand-gray-dark placeholder-brand-gray-light transition-all duration-200 shadow-xs focus:shadow-md"
               />
             </div>
           )}
@@ -168,7 +168,7 @@ export default function TaskForm({ currentLocationId, locations, categories, use
               placeholder="Bijv. Knutselpapier op kleur sorteren"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-5 py-4 rounded-[24px] border border-brand-border bg-brand-bg focus:outline-none focus:ring-2 focus:ring-brand-peach/50 text-sm font-medium text-brand-gray-dark placeholder-brand-gray-light transition"
+              className="w-full px-5 py-4 rounded-[24px] border border-brand-border bg-brand-bg focus:outline-none focus:ring-2 focus:ring-brand-peach focus:border-brand-peach focus:bg-white text-sm font-medium text-brand-gray-dark placeholder-brand-gray-light transition-all duration-200 shadow-xs focus:shadow-md"
             />
           </div>
 
@@ -181,7 +181,7 @@ export default function TaskForm({ currentLocationId, locations, categories, use
               placeholder="Geef een korte toelichting zodat de leidster meteen aan de slag kan."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-5 py-4 rounded-[24px] border border-brand-border bg-brand-bg focus:outline-none focus:ring-2 focus:ring-brand-peach/50 text-sm font-medium text-brand-gray-dark placeholder-brand-gray-light transition resize-none"
+              className="w-full px-5 py-4 rounded-[24px] border border-brand-border bg-brand-bg focus:outline-none focus:ring-2 focus:ring-brand-peach focus:border-brand-peach focus:bg-white text-sm font-medium text-brand-gray-dark placeholder-brand-gray-light transition-all duration-200 resize-none shadow-xs focus:shadow-md"
             />
           </div>
 
@@ -192,7 +192,7 @@ export default function TaskForm({ currentLocationId, locations, categories, use
               <select
                 value={selectedLocationId}
                 onChange={(e) => handleLocationChange(e.target.value)}
-                className="w-full px-5 py-3.5 rounded-full border border-brand-border bg-brand-bg focus:outline-none focus:ring-2 focus:ring-brand-peach/50 text-sm font-medium text-brand-gray-dark appearance-none"
+                className="w-full px-5 py-3.5 rounded-full border border-brand-border bg-brand-bg focus:outline-none focus:ring-2 focus:ring-brand-peach focus:border-brand-peach focus:bg-white text-sm font-medium text-brand-gray-dark appearance-none cursor-pointer transition-all duration-200 shadow-xs focus:shadow-md"
               >
                 {locations.map((loc) => (
                   <option key={loc.id} value={loc.id}>{loc.name}</option>
@@ -205,7 +205,7 @@ export default function TaskForm({ currentLocationId, locations, categories, use
               <select
                 value={selectedGroup}
                 onChange={(e) => setSelectedGroup(e.target.value)}
-                className="w-full px-5 py-3.5 rounded-full border border-brand-border bg-brand-bg focus:outline-none focus:ring-2 focus:ring-brand-peach/50 text-sm font-medium text-brand-gray-dark appearance-none"
+                className="w-full px-5 py-3.5 rounded-full border border-brand-border bg-brand-bg focus:outline-none focus:ring-2 focus:ring-brand-peach focus:border-brand-peach focus:bg-white text-sm font-medium text-brand-gray-dark appearance-none cursor-pointer transition-all duration-200 shadow-xs focus:shadow-md"
               >
                 {currentLocationObj?.groups.map((grp) => (
                   <option key={grp} value={grp}>{grp}</option>
@@ -224,7 +224,7 @@ export default function TaskForm({ currentLocationId, locations, categories, use
               <select
                 value={selectedAssignee}
                 onChange={(e) => setSelectedAssignee(e.target.value)}
-                className="w-full px-5 py-3.5 rounded-full border border-brand-border bg-brand-bg focus:outline-none focus:ring-2 focus:ring-brand-peach/50 text-sm font-medium text-brand-gray-dark appearance-none"
+                className="w-full px-5 py-3.5 rounded-full border border-brand-border bg-brand-bg focus:outline-none focus:ring-2 focus:ring-brand-peach focus:border-brand-peach focus:bg-white text-sm font-medium text-brand-gray-dark appearance-none cursor-pointer transition-all duration-200 shadow-xs focus:shadow-md"
               >
                 <option value="unassigned">Iedereen (Niet Toegewezen)</option>
                 {users.map(u => (

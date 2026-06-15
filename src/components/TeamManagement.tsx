@@ -87,14 +87,18 @@ export default function TeamManagement({ users, locations, onAddUser, onUpdateUs
       </div>
 
       {isEditing && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-[1000]">
-           <div className="bg-white rounded-[32px] p-8 w-full max-w-md shadow-xl border border-brand-border relative">
-             <button onClick={() => setIsEditing(null)} className="absolute top-6 right-6 p-2 rounded-full hover:bg-brand-bg">
-               <X className="w-5 h-5" />
-             </button>
-             <h2 className="text-2xl font-serif text-brand-gray-dark mb-6">{isEditing.id ? 'Bewerk Teamlid' : 'Nieuw Teamlid'}</h2>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-[1000] overflow-y-auto">
+           <div className="bg-white rounded-[32px] p-6 sm:p-8 w-full max-w-md max-h-[calc(100vh-32px)] overflow-hidden border border-brand-border flex flex-col relative my-auto animate-in fade-in zoom-in-95 duration-200">
              
-             <form onSubmit={handleSubmit} className="space-y-4">
+             {/* Header */}
+             <div className="flex items-center justify-between mb-4 pb-2 border-b border-brand-border/40">
+               <h2 className="text-xl sm:text-2xl font-serif text-brand-gray-dark">{isEditing.id ? 'Bewerk Teamlid' : 'Nieuw Teamlid'}</h2>
+               <button type="button" onClick={() => setIsEditing(null)} className="p-2 rounded-full hover:bg-brand-bg transition cursor-pointer">
+                 <X className="w-5 h-5 text-brand-gray" />
+               </button>
+             </div>
+             
+             <form onSubmit={handleSubmit} className="space-y-4 flex-1 overflow-y-auto scrollbar-thin pr-1 pb-1">
                <div>
                  <label className="text-xs uppercase font-bold text-brand-gray-light">Naam</label>
                  <input 
