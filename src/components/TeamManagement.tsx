@@ -47,7 +47,7 @@ export default function TeamManagement({ users, locations, onAddUser, onUpdateUs
            onClick={() => setIsEditing({})}
            className="px-4 py-2 bg-brand-sage-light text-brand-olive font-bold rounded-full text-sm flex items-center gap-2 hover:bg-brand-sage-lighter"
          >
-           <Plus className="w-4 h-4" /> Leidster Toevoegen
+           <Plus className="w-4 h-4" /> Groep Toevoegen
          </button>
       </div>
 

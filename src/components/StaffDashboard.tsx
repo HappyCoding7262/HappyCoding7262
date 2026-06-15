@@ -37,9 +37,9 @@ interface StaffDashboardProps {
   categories: CategoryInfo[];
   locations: LocationInfo[];
   currentUser: User;
-  onClaim: (taskId: string) => void;
+  onClaim: (taskId: string, personName?: string) => void;
   onUnclaim: (taskId: string) => void;
-  onComplete: (taskId: string) => void;
+  onComplete: (taskId: string, personName?: string) => void;
   onEditTask: (taskId: string, data: Partial<Task>) => void;
   onAddTask: (
     taskData: Omit<
@@ -49,6 +49,8 @@ interface StaffDashboardProps {
     creatorName: string,
   ) => void;
   onSendHeart: (userId: string) => void;
+  activeStaffName?: string;
+  onSetActiveStaffName?: (name: string) => void;
 }
 
 export default function StaffDashboard({
@@ -63,6 +65,8 @@ export default function StaffDashboard({
   onEditTask,
   onAddTask,
   onSendHeart,
+  activeStaffName = "Groep",
+  onSetActiveStaffName,
 }: StaffDashboardProps) {
   const [activeTab, setActiveTab] = useState<
     "open" | "claimed" | "completed" | "leaderboard"
@@ -83,6 +87,27 @@ export default function StaffDashboard({
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+
+  // Parse list of individuele leidsters in this group
+  const staffList = currentUser.staffNames
+    ? currentUser.staffNames.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
+
+  const handleClaim = (taskId: string) => {
+    if (activeStaffName && activeStaffName !== "Groep") {
+      onClaim(taskId, activeStaffName);
+    } else {
+      onClaim(taskId);
+    }
+  };
+
+  const handleComplete = (taskId: string) => {
+    if (activeStaffName && activeStaffName !== "Groep") {
+      onComplete(taskId, activeStaffName);
+    } else {
+      onComplete(taskId);
+    }
+  };
 
   // Grouped counts specifically for current location
   const locationTasks = tasks.filter((t) => t.locationId === selectedLocation);
@@ -209,6 +234,49 @@ export default function StaffDashboard({
           <Plus className="w-5 h-5" /> Nieuwe Taak
         </button>
       </div>
+
+      {/* Active Staff Switcher (Shared iPad mode) */}
+      {staffList.length > 0 && (
+        <div className="bg-white rounded-[32px] p-6 border border-brand-border shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h3 className="text-sm font-bold text-brand-gray-dark flex items-center gap-2">
+              📱 Gedeelde iPad: wie werkt er nu?
+            </h3>
+            <p className="text-xs text-brand-gray-light leading-normal">
+              Zorg dat jouw naam geselecteerd is zodat verdiende punten direct op jouw naam verschijnen!
+            </p>
+          </div>
+          
+          <div className="flex flex-wrap gap-2 items-center">
+            <button
+              onClick={() => onSetActiveStaffName?.("Groep")}
+              className={`px-4 py-2.5 rounded-full text-xs font-bold transition duration-200 cursor-pointer border ${
+                activeStaffName === "Groep"
+                  ? "bg-brand-gray-dark text-white border-brand-gray-dark shadow-sm"
+                  : "bg-brand-bg text-brand-gray hover:bg-brand-sage-lighter border-brand-border"
+              }`}
+            >
+              🏢 De Groep (Algemeen)
+            </button>
+            {staffList.map((name) => {
+              const isActive = activeStaffName === name;
+              return (
+                <button
+                  key={name}
+                  onClick={() => onSetActiveStaffName?.(name)}
+                  className={`px-4 py-2.5 rounded-full text-xs font-bold transition duration-200 cursor-pointer border ${
+                    isActive
+                      ? "bg-brand-sage text-white border-brand-sage shadow-sm scale-102"
+                      : "bg-brand-bg text-brand-gray hover:bg-brand-sage-lighter border-brand-border"
+                  }`}
+                >
+                  👩‍🏫 {name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Primary Filtering controls */}
       {activeTab !== "leaderboard" && (
@@ -372,6 +440,7 @@ export default function StaffDashboard({
           tasks={tasks}
           onSendHeart={onSendHeart}
           currentUser={currentUser}
+          activeStaffName={activeStaffName}
         />
       )}
 
@@ -390,9 +459,9 @@ export default function StaffDashboard({
                   currentUser={currentUser}
                   categories={categories}
                   locations={locations}
-                  onClaim={onClaim}
+                  onClaim={handleClaim}
                   onUnclaim={onUnclaim}
-                  onComplete={onComplete}
+                  onComplete={handleComplete}
                   onEdit={setEditingTask}
                   onUpdateTask={onEditTask}
                 />
@@ -485,7 +554,7 @@ export default function StaffDashboard({
                           )}
                           {task.status === "Open" && (
                             <button
-                              onClick={() => onClaim(task.id)}
+                              onClick={() => handleClaim(task.id)}
                               className="text-brand-peach hover:bg-brand-peach/5 text-xs font-bold px-3 py-1.5 border border-brand-peach/30 rounded-full transition"
                             >
                               Claim
@@ -500,7 +569,7 @@ export default function StaffDashboard({
                                 Teruggeven
                               </button>
                               <button
-                                onClick={() => onComplete(task.id)}
+                                onClick={() => handleComplete(task.id)}
                                 className="text-brand-sage hover:bg-brand-sage/5 text-xs font-bold px-3 py-1.5 border border-brand-sage/30 rounded-full transition"
                               >
                                 Afronden
@@ -638,7 +707,7 @@ export default function StaffDashboard({
                               )}
                               {task.status === "Open" && (
                                 <button
-                                  onClick={() => onClaim(task.id)}
+                                  onClick={() => handleClaim(task.id)}
                                   className="text-brand-peach hover:text-brand-peach-dark text-xs font-bold"
                                 >
                                   Claim
@@ -654,7 +723,7 @@ export default function StaffDashboard({
                                       Teruggeven
                                     </button>
                                     <button
-                                      onClick={() => onComplete(task.id)}
+                                      onClick={() => handleComplete(task.id)}
                                       className="text-brand-olive hover:text-brand-sage text-xs font-bold"
                                     >
                                       Afronden

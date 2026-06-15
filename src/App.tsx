@@ -43,6 +43,24 @@ export default function App() {
   const [categories, setCategories] = useState<CategoryInfo[]>([]);
   const [locations, setLocations] = useState<LocationInfo[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [activeStaffName, setActiveStaffName] = useState<string>('Groep');
+
+  useEffect(() => {
+    if (currentUser) {
+      const saved = localStorage.getItem(`activeStaffName_${currentUser.id}`);
+      setActiveStaffName(saved || 'Groep');
+    } else {
+      setActiveStaffName('Groep');
+    }
+  }, [currentUser?.id]);
+
+  const handleSetActiveStaffName = (name: string) => {
+    setActiveStaffName(name);
+    if (currentUser) {
+      localStorage.setItem(`activeStaffName_${currentUser.id}`, name);
+    }
+  };
+
   const [teamGoal, setTeamGoal] = useState({ targetTasks: 10, rewardDescription: 'de verrassing van deze week!' });
   
   const [confettiTrigger, setConfettiTrigger] = useState(0);
@@ -255,7 +273,6 @@ export default function App() {
     const targetUser = users.find(u => u.uid === currentUser.id || u.id === currentUser.id);
     if (targetUser) {
       const premiumAddition = 15; // +15 Points
-      const newPoints = (targetUser.points || 0) + premiumAddition;
 
       // Streak logic
       const todayStr = new Date().toDateString();
@@ -276,12 +293,40 @@ export default function App() {
         newStreak = 1;
       }
 
-      const updatedUserData = { 
-        ...targetUser, 
-        points: newPoints,
-        streakCount: newStreak,
-        lastCompletedDate: new Date().toISOString()
-      };
+      // Check if points go to an individual teacher, or the group
+      const staffList = targetUser.staffNames
+        ? targetUser.staffNames.split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+        : [];
+      const completedByNameLower = finalName ? finalName.trim().toLowerCase() : '';
+      const isIndividual = completedByNameLower && staffList.includes(completedByNameLower);
+
+      let updatedUserData;
+
+      if (isIndividual) {
+        // Find correct case of staff name
+        const originalStaffNames = targetUser.staffNames
+          ? targetUser.staffNames.split(',').map(s => s.trim()).filter(Boolean)
+          : [];
+        const originalName = originalStaffNames.find(n => n.toLowerCase() === completedByNameLower) || finalName;
+
+        const currentStaffPoints = { ...(targetUser.staffPoints || {}) };
+        currentStaffPoints[originalName] = (currentStaffPoints[originalName] || 0) + premiumAddition;
+
+        updatedUserData = {
+          ...targetUser,
+          staffPoints: currentStaffPoints,
+          streakCount: newStreak,
+          lastCompletedDate: new Date().toISOString()
+        };
+      } else {
+        const newPoints = (targetUser.points || 0) + premiumAddition;
+        updatedUserData = {
+          ...targetUser,
+          points: newPoints,
+          streakCount: newStreak,
+          lastCompletedDate: new Date().toISOString()
+        };
+      }
       
       saveUser(updatedUserData);
     }
@@ -478,27 +523,38 @@ export default function App() {
           </div>
 
           {/* Gamified personal points badges for the worker */}
-          {currentUser.role === 'Leidster' && (
-            <button 
-              onClick={() => setIsEditingProfile(true)}
-              className="flex items-center gap-4 cursor-pointer hover:bg-brand-bg px-2 py-1 rounded-xl transition" 
-              id="user-points-badge"
-              title="Bewerk profiel"
-            >
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-semibold text-brand-gray-dark">{currentUser.name}</p>
-                <p className="text-xs text-brand-sage">{currentUser.groupId}</p>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-brand-sage-light border-2 border-white shadow-sm flex items-center justify-center text-brand-olive font-bold relative">
-                {currentUser.points}
-                {currentUser.hearts! > 0 && (
-                   <span className="absolute -top-1 -right-1 bg-brand-peach text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold border border-white">
-                     {currentUser.hearts}
-                   </span>
-                )}
-              </div>
-            </button>
-          )}
+          {currentUser.role === 'Leidster' && (() => {
+            const hasActiveStaff = activeStaffName && activeStaffName !== 'Groep';
+            const activePoints = hasActiveStaff ? (currentUser.staffPoints?.[activeStaffName] || 0) : currentUser.points;
+            const displayName = hasActiveStaff ? `${currentUser.name} (${activeStaffName})` : currentUser.name;
+            
+            return (
+              <button 
+                onClick={() => setIsEditingProfile(true)}
+                className="flex items-center gap-4 cursor-pointer hover:bg-brand-bg px-2 py-1 rounded-xl transition" 
+                id="user-points-badge"
+                title="Bewerk profiel"
+              >
+                <div className="text-right hidden sm:block">
+                  <p className="text-sm font-semibold text-brand-gray-dark">{displayName}</p>
+                  <p className="text-xs text-brand-sage">
+                    {hasActiveStaff ? "Persoonlijke deeltijdpunten" : currentUser.groupId}
+                  </p>
+                </div>
+                <div 
+                  className="w-10 h-10 rounded-full bg-brand-sage-light border-2 border-white shadow-sm flex items-center justify-center text-brand-olive font-bold relative"
+                  title={hasActiveStaff ? `Punten van ${activeStaffName}` : `Groepspunten van ${currentUser.name}`}
+                >
+                  {activePoints}
+                  {currentUser.hearts! > 0 && (
+                     <span className="absolute -top-1 -right-1 bg-brand-peach text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold border border-white">
+                       {currentUser.hearts}
+                     </span>
+                  )}
+                </div>
+              </button>
+            );
+          })()}
 
           {(currentUser.role === 'Manager' || currentUser.role === 'Beheerder') && (
             <button 
@@ -612,12 +668,26 @@ export default function App() {
                   categories={categories}
                   locations={locations}
                   currentUser={currentUser}
-                  onClaim={(taskId) => setActionPrompt({ type: 'claim', taskId })}
+                  onClaim={(taskId, personName) => {
+                    if (personName) {
+                      handleClaimTask(taskId, personName);
+                    } else {
+                      setActionPrompt({ type: 'claim', taskId });
+                    }
+                  }}
                   onUnclaim={handleUnclaimTask}
-                  onComplete={(taskId) => handleCompleteTask(taskId)}
+                  onComplete={(taskId, personName) => {
+                    if (personName) {
+                      handleCompleteTask(taskId, personName);
+                    } else {
+                      setActionPrompt({ type: 'complete', taskId });
+                    }
+                  }}
                   onAddTask={handleCreateTask}
                   onEditTask={handleEditTask}
                   onSendHeart={handleSendHeart}
+                  activeStaffName={activeStaffName}
+                  onSetActiveStaffName={handleSetActiveStaffName}
                 />
               </motion.div>
             )}

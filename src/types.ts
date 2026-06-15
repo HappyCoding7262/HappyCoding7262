@@ -38,6 +38,7 @@ export interface User {
   email?: string; // Account email
   password?: string; // Account password
   staffNames?: string; // Optionele individuele namen van leidsters binnen dit (groeps)account
+  staffPoints?: Record<string, number>; // Optionele individuele punten per leidster binnen dit groepsaccount
 }
 
 export interface Task {
