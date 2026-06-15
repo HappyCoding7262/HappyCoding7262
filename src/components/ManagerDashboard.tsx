@@ -479,7 +479,7 @@ export default function ManagerDashboard({
                 : "text-brand-gray-light hover:text-brand-gray"
             }`}
           >
-            <Users className="w-3.5 h-3.5" /> Team
+            <Users className="w-3.5 h-3.5" /> Groep
           </button>
 
           <button
@@ -506,7 +506,7 @@ export default function ManagerDashboard({
                   : activeTab === "trends"
                     ? "Trends & Rapporten"
                     : activeTab === "team"
-                      ? "Team Leden"
+                      ? "Groepsleden"
                       : "Instellingen"}
           </span>
         </div>

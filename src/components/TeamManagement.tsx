@@ -42,7 +42,7 @@ export default function TeamManagement({ users, locations, onAddUser, onUpdateUs
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-         <h2 className="text-xl font-serif text-brand-gray-dark">Team Beheer</h2>
+         <h2 className="text-xl font-serif text-brand-gray-dark">Groepsbeheer</h2>
          <button 
            onClick={() => setIsEditing({})}
            className="px-4 py-2 bg-brand-sage-light text-brand-olive font-bold rounded-full text-sm flex items-center gap-2 hover:bg-brand-sage-lighter"
@@ -92,7 +92,7 @@ export default function TeamManagement({ users, locations, onAddUser, onUpdateUs
              
              {/* Header */}
              <div className="flex items-center justify-between mb-4 pb-2 border-b border-brand-border/40">
-               <h2 className="text-xl sm:text-2xl font-serif text-brand-gray-dark">{isEditing.id ? 'Bewerk Teamlid' : 'Nieuw Teamlid'}</h2>
+               <h2 className="text-xl sm:text-2xl font-serif text-brand-gray-dark">{isEditing.id ? 'Groepsaccount bewerken' : 'Nieuw groepsaccount'}</h2>
                <button type="button" onClick={() => setIsEditing(null)} className="p-2 rounded-full hover:bg-brand-bg transition cursor-pointer">
                  <X className="w-5 h-5 text-brand-gray" />
                </button>
