@@ -81,48 +81,93 @@ export default function App() {
 
     if (savedGoal) setTeamGoal(JSON.parse(savedGoal));
 
-    if (savedTasks) setTasks(JSON.parse(savedTasks));
-    else {
-      setTasks(INITIAL_TASKS);
-      localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(INITIAL_TASKS));
-    }
-
-    if (savedCategories) setCategories(JSON.parse(savedCategories));
-    else {
-      setCategories(Object.values(CATEGORIES));
-      localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(Object.values(CATEGORIES)));
-    }
-
-    if (savedLocations) setLocations(JSON.parse(savedLocations));
-    else {
-      setLocations(LOCATIONS);
+    let initialLocs = LOCATIONS;
+    if (savedLocations) {
+      initialLocs = JSON.parse(savedLocations);
+    } else {
       localStorage.setItem(STORAGE_KEY_LOCATIONS, JSON.stringify(LOCATIONS));
     }
+    setLocations(initialLocs);
 
-    if (savedUsers) {
-      let parsedUsers: User[] = JSON.parse(savedUsers);
-      // Ensure Mark's production admin credentials are sync'd to prevent localStorage lockouts
-      parsedUsers = parsedUsers.map(u => {
-        if (u.id === 'user-mark') {
-          return {
-            ...u,
-            email: 'mark@kindercentrum-ark.nl',
-            password: 'asdhjkl@3111AA',
-            role: 'Beheerder'
-          };
-        }
-        return u;
-      });
-      setUsers(parsedUsers);
-      localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(parsedUsers));
-      
-      if (savedUserId) {
-        const foundUser = parsedUsers.find((u: User) => u.id === savedUserId);
-        if (foundUser) setCurrentUser(foundUser);
-      }
+    let initialCats = Object.values(CATEGORIES);
+    if (savedCategories) {
+      initialCats = JSON.parse(savedCategories);
     } else {
-      setUsers(MOCK_USERS);
-      localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(MOCK_USERS));
+      localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(Object.values(CATEGORIES)));
+    }
+    setCategories(initialCats);
+
+    let loadedUsers = MOCK_USERS;
+    if (savedUsers) {
+      loadedUsers = JSON.parse(savedUsers);
+    }
+
+    let loadedTasks = INITIAL_TASKS;
+    if (savedTasks) {
+      loadedTasks = JSON.parse(savedTasks);
+    }
+
+    // Now let's run sanitization to clean up broken references and ensure all fields are perfectly linked!
+    // This maps any name matching 'Palestrinastraat 14' to 'loc-noord', etc.
+    const sanitizeId = (idOrName: string): string => {
+      if (!idOrName) return initialLocs[0]?.id || 'loc-noord';
+      // If it exists in actual IDs, it's valid:
+      if (initialLocs.some(l => l.id === idOrName)) return idOrName;
+      // Check if it's matching by name:
+      const matched = initialLocs.find(l => l.name.toLowerCase().trim() === idOrName.toLowerCase().trim());
+      if (matched) return matched.id;
+      // Default fallback
+      return initialLocs[0]?.id || 'loc-noord';
+    };
+
+    const sanitizedUsers = loadedUsers.map(user => {
+      const isMark = user.id === 'user-mark';
+      const cleanLocId = sanitizeId(user.locationId);
+      const locObj = initialLocs.find(l => l.id === cleanLocId);
+      const cleanGroupId = (locObj?.groups.includes(user.groupId) || user.groupId === 'Boventallig / Algemeen')
+        ? user.groupId 
+        : (locObj?.groups[0] || 'Boventallig / Algemeen');
+
+      return {
+        ...user,
+        locationId: cleanLocId,
+        groupId: cleanGroupId,
+        email: isMark ? 'mark@kindercentrum-ark.nl' : user.email,
+        password: isMark ? 'asdhjkl@3111AA' : user.password,
+        role: isMark ? 'Beheerder' : user.role,
+        points: user.points ?? 0,
+        hearts: user.hearts ?? 0,
+        streakCount: user.streakCount ?? 0,
+      };
+    });
+
+    const sanitizedTasks = loadedTasks.map(task => {
+      const cleanLocId = sanitizeId(task.locationId);
+      const locObj = initialLocs.find(l => l.id === cleanLocId);
+      const cleanGroupId = (task.groupId && (locObj?.groups.includes(task.groupId) || task.groupId === 'Boventallig / Algemeen'))
+        ? task.groupId 
+        : undefined;
+
+      return {
+        ...task,
+        locationId: cleanLocId,
+        groupId: cleanGroupId,
+      };
+    });
+
+    setUsers(sanitizedUsers);
+    setTasks(sanitizedTasks);
+
+    localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(sanitizedUsers));
+    localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(sanitizedTasks));
+
+    if (savedUserId) {
+      const foundUser = sanitizedUsers.find((u: User) => u.id === savedUserId);
+      if (foundUser) {
+        setCurrentUser(foundUser);
+      } else {
+        setCurrentUser(sanitizedUsers[0] || null);
+      }
     }
   }, []);
 
@@ -305,8 +350,10 @@ export default function App() {
   };
 
   // User Management
-  const handleAddUser = (user: Omit<User, 'id'>) => {
-    const newUser = { ...user, id: `user-${Date.now()}`, points: 0, hearts: 0 };
+  const handleAddUser = (user: User | Omit<User, 'id'>) => {
+    const newUser = 'id' in user 
+      ? user 
+      : { ...user, id: `user-${Date.now()}`, points: 0, hearts: 0 };
     saveUsersToStorage([...users, newUser as User]);
   };
   const handleUpdateUser = (id: string, data: Partial<User>) => {
