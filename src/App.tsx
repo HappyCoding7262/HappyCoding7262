@@ -337,6 +337,19 @@ export default function App() {
       saveUser({ ...target, ...data } as User);
     }
   };
+  const handleResetPassword = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const foundUser = users.find(u => u.email?.toLowerCase().trim() === email.toLowerCase().trim());
+      if (foundUser) {
+        await saveUser({ ...foundUser, password });
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error("Fout bij resetten wachtwoord in DB:", e);
+      return false;
+    }
+  };
   const handleDeleteUser = (id: string) => {
     deleteUserDB(id);
   };
@@ -428,6 +441,7 @@ export default function App() {
         locations={locations} 
         onLogin={handleUserSwitch} 
         onRegister={handleAddUser} 
+        onResetPassword={handleResetPassword}
       />
     );
   }
