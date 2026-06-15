@@ -173,7 +173,7 @@ export default function StaffDashboard({
             {currentUser.avatar}
           </div>
           <div>
-            <span className="text-[10px] uppercase tracking-[0.1em] font-bold text-brand-gray opacity-60 mb-1 block">
+            <span className="text-sm uppercase tracking-[0.05em] font-bold text-brand-gray-dark mb-1 block">
               Welkom terug, {currentUser.name}! 👋
             </span>
             <h2 className="text-2xl font-serif text-brand-gray-dark flex items-center gap-2 flex-wrap mb-2">
@@ -190,16 +190,14 @@ export default function StaffDashboard({
                 {currentUser.groupId}
               </span>
             </h2>
-            <p className="text-sm text-brand-gray-lighter flex items-center gap-3">
-              Hieronder zie je taken die vandaag klaarliggen voor boventallige
-              uren.
-              {currentUser.streakCount && currentUser.streakCount > 0 ? (
+            {currentUser.streakCount && currentUser.streakCount > 0 ? (
+              <div className="mt-2.5">
                 <span className="inline-flex items-center gap-1 text-orange-600 bg-orange-100 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
                   <Flame className="w-4 h-4 fill-orange-500 text-orange-600" />
                   {currentUser.streakCount} Dagen Streak!
                 </span>
-              ) : null}
-            </p>
+              </div>
+            ) : null}
           </div>
         </div>
 
