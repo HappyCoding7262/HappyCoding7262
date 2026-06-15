@@ -84,6 +84,7 @@ interface ManagerDashboardProps {
   onDeleteLocation: (id: string) => void;
   teamGoal: { targetTasks: number; rewardDescription: string };
   onUpdateGoal: (targetTasks: number, rewardDescription: string) => void;
+  onResetLeaderboard: () => Promise<boolean>;
 }
 
 export default function ManagerDashboard({
@@ -109,6 +110,7 @@ export default function ManagerDashboard({
   onDeleteLocation,
   teamGoal,
   onUpdateGoal,
+  onResetLeaderboard,
 }: ManagerDashboardProps) {
   const [selectedLocation, setSelectedLocation] = useState<string>("all");
   const [activeTab, setActiveTab] = useState<
@@ -1099,6 +1101,7 @@ export default function ManagerDashboard({
           onUpdateLocation={onUpdateLocation}
           onDeleteLocation={onDeleteLocation}
           onUpdateGoal={onUpdateGoal}
+          onResetLeaderboard={onResetLeaderboard}
         />
       )}
 

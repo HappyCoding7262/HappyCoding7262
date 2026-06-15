@@ -323,6 +323,25 @@ export default function App() {
     saveGoalDB({ targetTasks, rewardDescription });
   };
 
+  const handleResetLeaderboard = async (): Promise<boolean> => {
+    try {
+      const promises = users.map(user => 
+        saveUser({
+          ...user,
+          points: 0,
+          hearts: 0,
+          streakCount: 0,
+          lastCompletedDate: undefined
+        })
+      );
+      await Promise.all(promises);
+      return true;
+    } catch (e) {
+      console.error("Fout bij het resetten van leaderboard:", e);
+      return false;
+    }
+  };
+
   // Dev Reset
   const handleResetData = async () => {
     if (window.confirm('Weet u zeker dat u alle gegevens in de cloud-database wilt herstellen naar de begintoestand? 🔄')) {
@@ -507,6 +526,7 @@ export default function App() {
                   onDeleteLocation={handleDeleteLocation}
                   teamGoal={teamGoal}
                   onUpdateGoal={handleUpdateGoal}
+                  onResetLeaderboard={handleResetLeaderboard}
                 />
               </motion.div>
             ) : (

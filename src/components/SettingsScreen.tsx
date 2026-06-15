@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CategoryInfo, LocationInfo } from '../types';
-import { Plus, X, Pencil, Trash2 } from 'lucide-react';
+import { Plus, X, Pencil, Trash2, Trophy, RotateCcw } from 'lucide-react';
 
 interface SettingsScreenProps {
   categories: CategoryInfo[];
@@ -12,9 +12,21 @@ interface SettingsScreenProps {
   onUpdateLocation: (id: string, name: string, groups?: string[]) => void;
   onDeleteLocation: (id: string) => void;
   onUpdateGoal: (targetTasks: number, rewardDescription: string) => void;
+  onResetLeaderboard: () => Promise<boolean>;
 }
 
-export default function SettingsScreen({ categories, locations, teamGoal, onAddCategory, onDeleteCategory, onAddLocation, onUpdateLocation, onDeleteLocation, onUpdateGoal }: SettingsScreenProps) {
+export default function SettingsScreen({ 
+  categories, 
+  locations, 
+  teamGoal, 
+  onAddCategory, 
+  onDeleteCategory, 
+  onAddLocation, 
+  onUpdateLocation, 
+  onDeleteLocation, 
+  onUpdateGoal,
+  onResetLeaderboard
+}: SettingsScreenProps) {
   const [newCatLabel, setNewCatLabel] = useState('');
   const [newLocName, setNewLocName] = useState('');
   const [editingLocId, setEditingLocId] = useState<string | null>(null);
@@ -24,6 +36,25 @@ export default function SettingsScreen({ categories, locations, teamGoal, onAddC
   
   const [goalTarget, setGoalTarget] = useState(teamGoal.targetTasks);
   const [goalReward, setGoalReward] = useState(teamGoal.rewardDescription);
+
+  const [resetState, setResetState] = useState<'idle' | 'confirm' | 'success' | 'error'>('idle');
+  const [isResetting, setIsResetting] = useState(false);
+
+  const handleResetLeaderboardClick = async () => {
+    setIsResetting(true);
+    try {
+      const success = await onResetLeaderboard();
+      if (success) {
+        setResetState('success');
+      } else {
+        setResetState('error');
+      }
+    } catch (e) {
+      setResetState('error');
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   const handleAddCategory = () => {
     if (!newCatLabel.trim()) return;
@@ -262,6 +293,64 @@ export default function SettingsScreen({ categories, locations, teamGoal, onAddC
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Leaderboard Reset */}
+      <div className="bg-white border border-red-200 rounded-[32px] p-6 shadow-sm">
+        <div className="flex items-center gap-3 mb-4 animate-fade-in">
+          <Trophy className="w-6 h-6 text-brand-peach" />
+          <h2 className="text-xl font-serif text-brand-gray-dark">Leaderboard Resetten</h2>
+        </div>
+        <p className="text-sm text-brand-gray mb-6">
+          Wilt u de scores resetten? Hiermee worden de <strong>punten</strong>, <strong>hearts</strong> en <strong>streaks</strong> van álle medewerkers teruggezet naar <strong>0</strong>. Dit heeft geen invloed op de accounts zelf of op de taken.
+        </p>
+
+        {resetState === 'idle' ? (
+          <button
+            onClick={() => setResetState('confirm')}
+            className="px-6 py-3 bg-red-50 text-red-600 font-bold rounded-full flex items-center gap-2 hover:bg-red-100 transition duration-200"
+          >
+            <RotateCcw className="w-4 h-4" /> Reset Leaderboard
+          </button>
+        ) : resetState === 'confirm' ? (
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-bold text-red-650">Weet u dit zeker?</span>
+            <button
+              onClick={handleResetLeaderboardClick}
+              disabled={isResetting}
+              className="px-5 py-2.5 bg-red-600 text-white font-bold rounded-full text-sm hover:bg-red-700 transition duration-200 flex items-center gap-2 disabled:bg-red-400"
+            >
+              {isResetting ? 'Bezig met resetten...' : 'Ja, reset nu'}
+            </button>
+            <button
+              onClick={() => setResetState('idle')}
+              disabled={isResetting}
+              className="px-5 py-2.5 bg-brand-bg text-brand-gray-dark font-bold rounded-full text-sm hover:bg-brand-border transition duration-200"
+            >
+              Annuleren
+            </button>
+          </div>
+        ) : resetState === 'success' ? (
+          <div className="p-4 bg-green-50 text-green-700 rounded-2xl text-sm font-medium flex items-center justify-between border border-green-200">
+            <span>✓ Het leaderboard is succesvol gereset!</span>
+            <button 
+              onClick={() => setResetState('idle')} 
+              className="px-3 py-1 bg-white border border-green-200 text-green-700 rounded-full font-bold text-xs hover:bg-green-100 transition"
+            >
+              Ok
+            </button>
+          </div>
+        ) : (
+          <div className="p-4 bg-red-50 text-red-700 rounded-2xl text-sm font-medium flex items-center justify-between border border-red-200">
+            <span>❌ Fout opgetreden bij het resetten. Probeer het opnieuw.</span>
+            <button 
+              onClick={() => setResetState('idle')} 
+              className="px-3 py-1 bg-white border border-red-200 text-red-700 rounded-full font-bold text-xs hover:bg-red-100 transition"
+            >
+              Sluiten
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
