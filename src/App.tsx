@@ -32,7 +32,7 @@ import {
   subscribeToGoal, saveGoalDB
 } from './firebase/db';
 import { db } from './firebase/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 
 const STORAGE_KEY_LOGGED_IN = 'ark_takenbeheer_logged_in_id';
 
@@ -76,60 +76,57 @@ export default function App() {
 
   // Synchronise met Firestore in real-time voor een naadloze multi-device werking
   useEffect(() => {
-    // 1. Subscribe to locations
+    // 1. Initial check and seed database ONLY if it has never been marked as initialized
+    const checkAndSeed = async () => {
+      try {
+        const setupDocRef = doc(db, 'system', 'setup');
+        const setupSnap = await getDoc(setupDocRef);
+        if (!setupSnap.exists() || !setupSnap.data()?.initialized) {
+          console.log("Database has never been initialized. Seeding initial data...");
+          
+          for (const loc of LOCATIONS) {
+            await saveLocationDB(loc);
+          }
+          for (const cat of Object.values(CATEGORIES)) {
+            await saveCategoryDB(cat);
+          }
+          for (const user of MOCK_USERS) {
+            await saveUser(user);
+          }
+          for (const task of INITIAL_TASKS) {
+            await createTaskDB(task);
+          }
+          await saveGoalDB({ targetTasks: 10, rewardDescription: 'de verrassing van deze week!' });
+          await setDoc(setupDocRef, { initialized: true });
+          console.log("Database seeding completed successfully!");
+        }
+      } catch (e) {
+        console.error("Error checking or seeding database:", e);
+      }
+    };
+    
+    checkAndSeed();
+
+    // 2. Subscribe to resources - no automatic seeding inside individual subscription events
     const unsubLocs = subscribeToLocations((dbLocs) => {
-      if (dbLocs.length === 0) {
-        LOCATIONS.forEach(loc => saveLocationDB(loc));
-      } else {
-        setLocations(dbLocs);
-      }
+      setLocations(dbLocs);
     });
 
-    // 2. Subscribe to categories
     const unsubCats = subscribeToCategories((dbCats) => {
-      if (dbCats.length === 0) {
-        Object.values(CATEGORIES).forEach(cat => saveCategoryDB(cat));
-      } else {
-        setCategories(dbCats);
-      }
+      setCategories(dbCats);
     });
 
-    // 3. Subscribe to users
     const unsubUsers = subscribeToUsers((dbUsers) => {
-      if (dbUsers.length === 0) {
-        MOCK_USERS.forEach(user => saveUser(user));
-      } else {
-        setUsers(dbUsers);
-      }
+      setUsers(dbUsers);
     });
 
-    // 4. Subscribe to tasks
     const unsubTasks = subscribeToTasks((dbTasks) => {
-      if (dbTasks.length === 0) {
-        INITIAL_TASKS.forEach(task => createTaskDB(task));
-      } else {
-        setTasks(dbTasks);
-      }
+      setTasks(dbTasks);
     });
 
-    // 5. Subscribe to Goal
     const unsubGoal = subscribeToGoal((dbGoal) => {
       setTeamGoal(dbGoal);
     });
-
-    // Initial goal seeding wrapper
-    const checkGoal = async () => {
-      try {
-        const goalDocRef = doc(db, 'goals', 'teamGoal');
-        const goalSnap = await getDoc(goalDocRef);
-        if (!goalSnap.exists()) {
-          await saveGoalDB({ targetTasks: 10, rewardDescription: 'de verrassing van deze week!' });
-        }
-      } catch (e) {
-        console.error("Error setting up initial goal:", e);
-      }
-    };
-    checkGoal();
 
     return () => {
       unsubLocs();
@@ -346,6 +343,9 @@ export default function App() {
   const handleResetData = async () => {
     if (window.confirm('Weet u zeker dat u alle gegevens in de cloud-database wilt herstellen naar de begintoestand? 🔄')) {
       try {
+        const setupDocRef = doc(db, 'system', 'setup');
+        await deleteDoc(setupDocRef);
+
         for (const task of tasks) {
           await deleteTaskDB(task.id);
         }
@@ -364,6 +364,8 @@ export default function App() {
         MOCK_USERS.forEach(user => saveUser(user));
         INITIAL_TASKS.forEach(task => createTaskDB(task));
         await saveGoalDB({ targetTasks: 10, rewardDescription: 'de verrassing van deze week!' });
+        
+        await setDoc(setupDocRef, { initialized: true });
         
         alert('Gegevens zijn hersteld naar de begintoestand! 🔄');
       } catch (e) {

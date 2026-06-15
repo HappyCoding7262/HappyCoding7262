@@ -28,6 +28,24 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 }
 
 // User methods
+export function sanitizeObject(obj: any): any {
+  if (obj === null) return null;
+  if (obj === undefined) return null;
+  if (Array.isArray(obj)) {
+    return obj.map(sanitizeObject);
+  }
+  if (typeof obj === 'object') {
+    const clean: any = {};
+    for (const key of Object.keys(obj)) {
+      if (obj[key] !== undefined) {
+        clean[key] = sanitizeObject(obj[key]);
+      }
+    }
+    return clean;
+  }
+  return obj;
+}
+
 export const subscribeToUsers = (callback: (users: User[]) => void) => {
   const q = query(collection(db, 'users'));
   return onSnapshot(q, (snapshot) => {
@@ -40,7 +58,8 @@ export const subscribeToUsers = (callback: (users: User[]) => void) => {
 export const saveUser = async (user: User) => {
   try {
     const userDocRef = doc(db, 'users', user.id);
-    await setDoc(userDocRef, { ...user, uid: user.id });
+    const sanitized = sanitizeObject({ ...user, uid: user.id });
+    await setDoc(userDocRef, sanitized);
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, `users/${user.id}`);
   }
@@ -68,7 +87,7 @@ export const subscribeToTasks = (callback: (tasks: Task[]) => void) => {
 export const createTaskDB = async (task: Task) => {
   try {
     const taskDocRef = doc(db, 'tasks', task.id);
-    await setDoc(taskDocRef, task);
+    await setDoc(taskDocRef, sanitizeObject(task));
   } catch (err) {
     handleFirestoreError(err, OperationType.CREATE, `tasks/${task.id}`);
   }
@@ -77,7 +96,7 @@ export const createTaskDB = async (task: Task) => {
 export const updateTaskDB = async (taskId: string, data: Partial<Task>) => {
   try {
     const taskDocRef = doc(db, 'tasks', taskId);
-    await updateDoc(taskDocRef, data);
+    await updateDoc(taskDocRef, sanitizeObject(data));
   } catch (err) {
     handleFirestoreError(err, OperationType.UPDATE, `tasks/${taskId}`);
   }
@@ -105,7 +124,7 @@ export const subscribeToLocations = (callback: (locations: LocationInfo[]) => vo
 export const saveLocationDB = async (loc: LocationInfo) => {
   try {
     const locDocRef = doc(db, 'locations', loc.id);
-    await setDoc(locDocRef, loc);
+    await setDoc(locDocRef, sanitizeObject(loc));
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, `locations/${loc.id}`);
   }
@@ -133,7 +152,7 @@ export const subscribeToCategories = (callback: (categories: CategoryInfo[]) => 
 export const saveCategoryDB = async (cat: CategoryInfo) => {
   try {
     const catDocRef = doc(db, 'categories', cat.type);
-    await setDoc(catDocRef, cat);
+    await setDoc(catDocRef, sanitizeObject(cat));
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, `categories/${cat.type}`);
   }
@@ -163,7 +182,7 @@ export const subscribeToGoal = (callback: (goal: { targetTasks: number; rewardDe
 export const saveGoalDB = async (goal: { targetTasks: number; rewardDescription: string }) => {
   try {
     const goalDocRef = doc(db, 'goals', 'teamGoal');
-    await setDoc(goalDocRef, goal);
+    await setDoc(goalDocRef, sanitizeObject(goal));
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, 'goals/teamGoal');
   }
