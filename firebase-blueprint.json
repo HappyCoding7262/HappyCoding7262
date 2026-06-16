@@ -8,7 +8,7 @@
         "uid": { "type": "string" },
         "name": { "type": "string" },
         "email": { "type": "string" },
-        "role": { "type": "string", "enum": ["Leidster", "Manager"] },
+        "role": { "type": "string", "enum": ["Leidster", "Manager", "Beheerder"] },
         "avatar": { "type": "string" },
         "bio": { "type": "string" },
         "locationId": { "type": "string" },
@@ -16,7 +16,9 @@
         "points": { "type": "number" },
         "streakCount": { "type": "number" },
         "lastCompletedDate": { "type": "string" },
-        "createdAt": { "type": "string" }
+        "createdAt": { "type": "string" },
+        "staffNames": { "type": "string" },
+        "staffPoints": { "type": "object" }
       },
       "required": ["uid", "name", "role"]
     },
@@ -28,7 +30,7 @@
         "id": { "type": "string" },
         "title": { "type": "string" },
         "description": { "type": "string" },
-        "category": { "type": "string", "enum": ["Cleaning", "Organizing", "Admin", "Activity", "Communication"] },
+        "category": { "type": "string" },
         "priority": { "type": "string", "enum": ["Laag", "Gemiddeld", "Hoog"] },
         "locationId": { "type": "string" },
         "groupId": { "type": "string" },
@@ -46,6 +48,49 @@
         "googleTaskId": { "type": "string" }
       },
       "required": ["id", "title", "description", "category", "priority", "locationId", "status", "createdByUserId", "createdByName", "createdAt"]
+    },
+    "LocationInfo": {
+      "title": "LocationInfo",
+      "description": "A location with groups",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "groups": { "type": "array" }
+      },
+      "required": ["id", "name"]
+    },
+    "CategoryInfo": {
+      "title": "CategoryInfo",
+      "description": "Information about a task category",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "label": { "type": "string" },
+        "iconName": { "type": "string" },
+        "color": { "type": "string" },
+        "bgLight": { "type": "string" }
+      },
+      "required": ["type", "label"]
+    },
+    "Goal": {
+      "title": "Goal",
+      "description": "Team goals and tasks target",
+      "type": "object",
+      "properties": {
+        "targetTasks": { "type": "number" },
+        "rewardDescription": { "type": "string" }
+      },
+      "required": ["targetTasks", "rewardDescription"]
+    },
+    "System": {
+      "title": "System",
+      "description": "System configuration and setup status",
+      "type": "object",
+      "properties": {
+        "initialized": { "type": "boolean" }
+      },
+      "required": ["initialized"]
     }
   },
   "firestore": {
@@ -56,6 +101,22 @@
     "tasks/{taskId}": {
       "schema": "Task",
       "description": "Tasks for the daycare"
+    },
+    "locations/{locationId}": {
+      "schema": "LocationInfo",
+      "description": "Daycare locations"
+    },
+    "categories/{categoryId}": {
+      "schema": "CategoryInfo",
+      "description": "Task categories"
+    },
+    "goals/{goalId}": {
+      "schema": "Goal",
+      "description": "Team goals"
+    },
+    "system/{systemId}": {
+      "schema": "System",
+      "description": "System configuration setup flag"
     }
   }
 }
