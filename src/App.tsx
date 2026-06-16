@@ -221,6 +221,12 @@ export default function App() {
         const setupSnap = await getDoc(setupDocRef).catch(() => null);
         const localFlag = localStorage.getItem('ark_db_initialized_flag');
 
+        // Als we geen verbinding kunnen maken om de setup status te controleren, breek dan veilig af om overschrijven te voorkomen
+        if (setupSnap === null && !localFlag) {
+          console.warn("Kon setup-status niet verifiëren met Firestore vanwege netwerkvertraging of verbindingverlies. Initialisatie tijdelijk uitgesteld.");
+          return;
+        }
+
         const isConfigured = (setupSnap && setupSnap.exists() && setupSnap.data()?.initialized) || localFlag;
 
         if (!isConfigured) {
@@ -230,7 +236,7 @@ export default function App() {
           const { getDocs, query, collection, limit } = await import('firebase/firestore');
           
           const usersSnap = await getDocs(query(collection(db, 'users'), limit(1))).catch(() => null);
-          if (!usersSnap || usersSnap.empty) {
+          if (usersSnap && usersSnap.empty) {
             console.log("No users found in Firestore. Seeding admin & default users...");
             for (const user of MOCK_USERS) {
               await saveUser(user);
@@ -238,7 +244,7 @@ export default function App() {
           }
           
           const tasksSnap = await getDocs(query(collection(db, 'tasks'), limit(1))).catch(() => null);
-          if (!tasksSnap || tasksSnap.empty) {
+          if (tasksSnap && tasksSnap.empty) {
             if (INITIAL_TASKS.length > 0) {
               console.log("No tasks found in Firestore. Seeding default tasks...");
               for (const task of INITIAL_TASKS) {
@@ -248,7 +254,7 @@ export default function App() {
           }
 
           const locsSnap = await getDocs(query(collection(db, 'locations'), limit(1))).catch(() => null);
-          if (!locsSnap || locsSnap.empty) {
+          if (locsSnap && locsSnap.empty) {
             if (LOCATIONS.length > 0) {
               console.log("No locations found in Firestore. Seeding default locations...");
               for (const loc of LOCATIONS) {
@@ -258,7 +264,7 @@ export default function App() {
           }
 
           const catsSnap = await getDocs(query(collection(db, 'categories'), limit(1))).catch(() => null);
-          if (!catsSnap || catsSnap.empty) {
+          if (catsSnap && catsSnap.empty) {
             console.log("No categories found in Firestore. Seeding default categories...");
             for (const cat of Object.values(CATEGORIES)) {
               await saveCategoryDB(cat);
@@ -278,26 +284,30 @@ export default function App() {
         // Garandeer dat de beheerder 'Mark' altijd met de juiste credentials in de database staat
         const adminDocRef = doc(db, 'users', 'user-mark');
         const adminSnap = await getDoc(adminDocRef).catch(() => null);
-        const correctAdminUser: User = {
-          id: 'user-mark',
-          name: 'Mark',
-          role: 'Beheerder',
-          avatar: '👨‍💻',
-          bio: 'Systeembeheerder & techniek.',
-          locationId: '',
-          groupId: '',
-          points: (adminSnap && adminSnap.exists()) ? (adminSnap.data()?.points || 0) : 0,
-          streakCount: (adminSnap && adminSnap.exists()) ? (adminSnap.data()?.streakCount || 0) : 0,
-          email: 'mark@kindercentrum-ark.nl',
-          password: 'asdhjkl@3111AA'
-        };
+        
+        // Beveiliging: als de admin data niet opgehaald kan worden door een offline status, overschrijf Mark dan niet lokaal
+        if (adminSnap !== null) {
+          const correctAdminUser: User = {
+            id: 'user-mark',
+            name: 'Mark',
+            role: 'Beheerder',
+            avatar: '👨‍💻',
+            bio: 'Systeembeheerder & techniek.',
+            locationId: '',
+            groupId: '',
+            points: adminSnap.exists() ? (adminSnap.data()?.points || 0) : 0,
+            streakCount: adminSnap.exists() ? (adminSnap.data()?.streakCount || 0) : 0,
+            email: 'mark@kindercentrum-ark.nl',
+            password: 'asdhjkl@3111AA'
+          };
 
-        if (!adminSnap || !adminSnap.exists() || 
-            adminSnap.data()?.password !== 'asdhjkl@3111AA' || 
-            adminSnap.data()?.email !== 'mark@kindercentrum-ark.nl' ||
-            adminSnap.data()?.role !== 'Beheerder') {
-          console.log("Updaten of creëren van de Beheerder 'Mark' in Firestore met de juiste inloggegevens...");
-          await saveUser(correctAdminUser);
+          if (!adminSnap.exists() || 
+              adminSnap.data()?.password !== 'asdhjkl@3111AA' || 
+              adminSnap.data()?.email !== 'mark@kindercentrum-ark.nl' ||
+              adminSnap.data()?.role !== 'Beheerder') {
+            console.log("Updaten of creëren van de Beheerder 'Mark' in Firestore met de juiste inloggegevens...");
+            await saveUser(correctAdminUser);
+          }
         }
       } catch (e: any) {
         if (e?.message?.includes("offline") || e?.code === "unavailable" || !navigator.onLine) {
