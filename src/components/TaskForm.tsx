@@ -54,6 +54,11 @@ export default function TaskForm({ currentLocationId, locations, categories, use
     let claimedByName = initialTask?.claimedByName;
     let claimedAt = initialTask?.claimedAt;
 
+    let completedByUserId = initialTask?.completedByUserId;
+    let completedByName = initialTask?.completedByName;
+    let completedAt = initialTask?.completedAt;
+    let cheerMessage = initialTask?.cheerMessage;
+
     if (selectedAssignee !== 'unassigned') {
       const assignedUser = users?.find(u => u.id === selectedAssignee);
       if (assignedUser) {
@@ -62,15 +67,28 @@ export default function TaskForm({ currentLocationId, locations, categories, use
         claimedByName = assignedUser.name;
         if (!initialTask?.claimedAt) claimedAt = new Date().toISOString();
         if (initialTask?.status === 'Completed') {
-          status = 'Completed'; // Don't revert completed tasks back to claimed
+          if (selectedAssignee !== initialTask.completedByUserId && selectedAssignee !== initialTask.claimedByUserId) {
+            status = 'Claimed';
+            completedByUserId = undefined;
+            completedByName = undefined;
+            completedAt = undefined;
+            cheerMessage = undefined;
+          } else {
+            status = 'Completed';
+          }
         }
       }
     } else {
-      if (initialTask?.status !== 'Completed') {
-        status = 'Open';
-        claimedByUserId = undefined;
-        claimedByName = undefined;
-        claimedAt = undefined;
+      status = 'Open';
+      claimedByUserId = undefined;
+      claimedByName = undefined;
+      claimedAt = undefined;
+
+      if (initialTask?.status === 'Completed') {
+        completedByUserId = undefined;
+        completedByName = undefined;
+        completedAt = undefined;
+        cheerMessage = undefined;
       }
     }
 
@@ -83,9 +101,13 @@ export default function TaskForm({ currentLocationId, locations, categories, use
         locationId: selectedLocationId,
         groupId: selectedGroup === 'Boventallig / Algemeen' ? undefined : selectedGroup,
         status,
-        claimedByUserId,
-        claimedByName,
-        claimedAt,
+        claimedByUserId: claimedByUserId || null as any,
+        claimedByName: claimedByName || null as any,
+        claimedAt: claimedAt || null as any,
+        completedByUserId: completedByUserId || null as any,
+        completedByName: completedByName || null as any,
+        completedAt: completedAt || null as any,
+        cheerMessage: cheerMessage || null as any,
         attachments
       });
     } else {

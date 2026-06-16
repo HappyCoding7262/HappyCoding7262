@@ -552,6 +552,23 @@ export default function StaffDashboard({
                               Bewerk
                             </button>
                           )}
+                          {task.status === "Completed" && (
+                            <button
+                              onClick={() => onEditTask(task.id, {
+                                status: "Open",
+                                completedByUserId: null as any,
+                                completedByName: null as any,
+                                completedAt: null as any,
+                                claimedByUserId: null as any,
+                                claimedByName: null as any,
+                                claimedAt: null as any,
+                                cheerMessage: null as any
+                              })}
+                              className="text-brand-gray hover:text-brand-peach hover:bg-brand-peach/5 text-xs font-bold px-3 py-1.5 border border-brand-border hover:border-brand-peach/50 rounded-full transition"
+                            >
+                              Heropenen ↩️
+                            </button>
+                          )}
                           {task.status === "Open" && (
                             <button
                               onClick={() => handleClaim(task.id)}
@@ -703,6 +720,23 @@ export default function StaffDashboard({
                                   className="text-brand-gray hover:text-brand-olive text-xs font-bold"
                                 >
                                   Bewerk
+                                </button>
+                              )}
+                              {task.status === "Completed" && (
+                                <button
+                                  onClick={() => onEditTask(task.id, {
+                                    status: "Open",
+                                    completedByUserId: null as any,
+                                    completedByName: null as any,
+                                    completedAt: null as any,
+                                    claimedByUserId: null as any,
+                                    claimedByName: null as any,
+                                    claimedAt: null as any,
+                                    cheerMessage: null as any
+                                  })}
+                                  className="text-brand-peach hover:text-brand-peach-dark text-xs font-bold"
+                                >
+                                  Heropenen ↩️
                                 </button>
                               )}
                               {task.status === "Open" && (

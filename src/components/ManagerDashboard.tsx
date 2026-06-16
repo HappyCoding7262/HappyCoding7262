@@ -446,7 +446,7 @@ export default function ManagerDashboard({
                 : "text-brand-gray-light hover:text-brand-gray"
             }`}
           >
-            Tijdlijn
+            Voltooide Taken
           </button>
 
           <button
@@ -500,7 +500,7 @@ export default function ManagerDashboard({
             {activeTab === "feed"
               ? "Actieve Taken"
               : activeTab === "timeline"
-                ? "Tijdlijn Archief"
+                ? "Voltooide Taken"
                 : activeTab === "leaderboard"
                   ? "Leaderboard Scores"
                   : activeTab === "trends"
@@ -825,7 +825,7 @@ export default function ManagerDashboard({
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-2 pb-2">
             <div>
               <h3 className="text-2xl font-serif text-brand-gray-dark flex items-center gap-3">
-                Voltooide taken archief
+                Voltooide Taken
               </h3>
               <p className="text-xs text-brand-gray-light mt-1 flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-brand-olive inline" />{" "}
@@ -921,6 +921,21 @@ export default function ManagerDashboard({
                         </div>
 
                         <div className="flex gap-2">
+                          <button
+                            onClick={() => onEditTask(task.id, {
+                              status: 'Open',
+                              completedByUserId: null as any,
+                              completedByName: null as any,
+                              completedAt: null as any,
+                              claimedByUserId: null as any,
+                              claimedByName: null as any,
+                              claimedAt: null as any,
+                              cheerMessage: null as any
+                            })}
+                            className="bg-brand-peach/10 text-brand-peach hover:bg-brand-peach/20 active:scale-95 text-xs font-bold px-3 py-1.5 border border-brand-peach/30 rounded-full transition cursor-pointer"
+                          >
+                            Heropenen ↩️
+                          </button>
                           <button
                             onClick={() => setEditingTask(task)}
                             className="text-brand-gray hover:text-brand-olive hover:bg-brand-bg text-xs font-bold px-3 py-1.5 border border-brand-border rounded-full transition"
@@ -1037,6 +1052,22 @@ export default function ManagerDashboard({
                           </td>
                           <td className="p-4 text-right">
                             <div className="flex justify-end gap-3">
+                              <button
+                                onClick={() => onEditTask(task.id, {
+                                  status: 'Open',
+                                  completedByUserId: null as any,
+                                  completedByName: null as any,
+                                  completedAt: null as any,
+                                  claimedByUserId: null as any,
+                                  claimedByName: null as any,
+                                  claimedAt: null as any,
+                                  cheerMessage: null as any
+                                })}
+                                className="text-brand-peach hover:text-brand-peach-dark text-xs font-bold"
+                                title="Taak heropenen en terugzetten naar openstaand"
+                              >
+                                Heropenen ↩️
+                              </button>
                               <button
                                 onClick={() => setEditingTask(task)}
                                 className="text-brand-gray hover:text-brand-olive text-xs font-bold"

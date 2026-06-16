@@ -432,10 +432,31 @@ export default function TaskCard({
                 <p className="mt-3 text-sm text-brand-olive font-medium">
                   "{task.cheerMessage}"
                 </p>
-                <div className="mt-4 flex flex-wrap items-center gap-3 text-[10px] uppercase font-bold tracking-[0.1em] text-brand-gray-light">
-                  <span>Uitgevoerd door: <span className="text-brand-gray">{task.completedByName}</span></span>
-                  <span className="hidden sm:inline">•</span>
-                  <span className="text-brand-gray">{new Date(task.completedAt!).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })} uur</span>
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase font-bold tracking-[0.1em] text-brand-gray-light">
+                    <span>Uitgevoerd door: <span className="text-brand-gray">{task.completedByName}</span></span>
+                    <span className="hidden sm:inline">•</span>
+                    <span className="text-brand-gray">{new Date(task.completedAt!).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })} uur</span>
+                  </div>
+                  {onUpdateTask && (
+                    <button
+                      type="button"
+                      onClick={() => onUpdateTask(task.id, {
+                        status: 'Open',
+                        completedByUserId: null as any,
+                        completedByName: null as any,
+                        completedAt: null as any,
+                        claimedByUserId: null as any,
+                        claimedByName: null as any,
+                        claimedAt: null as any,
+                        cheerMessage: null as any
+                      })}
+                      className="px-3.5 py-1.5 rounded-full border border-brand-border bg-white text-[11px] font-bold text-brand-gray hover:text-brand-peach hover:border-brand-peach/50 hover:bg-brand-peach/5 active:scale-95 transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                      title="Taak heropenen en terugzetten naar openstaand"
+                    >
+                      <span>Heropenen ↩️</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
