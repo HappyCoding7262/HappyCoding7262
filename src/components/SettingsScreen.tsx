@@ -36,6 +36,7 @@ export default function SettingsScreen({
   
   const [goalTarget, setGoalTarget] = useState(teamGoal.targetTasks);
   const [goalReward, setGoalReward] = useState(teamGoal.rewardDescription);
+  const [goalSavedSuccess, setGoalSavedSuccess] = useState(false);
 
   const [resetState, setResetState] = useState<'idle' | 'confirm' | 'success' | 'error'>('idle');
   const [isResetting, setIsResetting] = useState(false);
@@ -83,19 +84,35 @@ export default function SettingsScreen({
   };
 
   const handleAddGroupToLocation = () => {
-    if (newGroupName.trim() && !editingLocGroups.includes(newGroupName.trim())) {
-      setEditingLocGroups([...editingLocGroups, newGroupName.trim()]);
+    const trimmed = newGroupName.trim();
+    if (trimmed && !editingLocGroups.includes(trimmed)) {
+      const updatedGroups = [...editingLocGroups, trimmed];
+      setEditingLocGroups(updatedGroups);
       setNewGroupName('');
+      
+      // Auto-save direct naar database om dataverlies bij sluiten te voorkomen
+      if (editingLocId) {
+        onUpdateLocation(editingLocId, editingLocName.trim(), updatedGroups);
+      }
     }
   };
 
   const handleRemoveGroupFromLocation = (groupToRemove: string) => {
-    setEditingLocGroups(editingLocGroups.filter(g => g !== groupToRemove));
+    const updatedGroups = editingLocGroups.filter(g => g !== groupToRemove);
+    setEditingLocGroups(updatedGroups);
+    
+    // Auto-save direct naar database om dataverlies bij sluiten te voorkomen
+    if (editingLocId) {
+      onUpdateLocation(editingLocId, editingLocName.trim(), updatedGroups);
+    }
   };
 
   const saveGoal = () => {
     onUpdateGoal(goalTarget, goalReward);
-    alert('Team doel opgeslagen!');
+    setGoalSavedSuccess(true);
+    setTimeout(() => {
+      setGoalSavedSuccess(false);
+    }, 4000);
   };
 
   return (
@@ -124,9 +141,16 @@ export default function SettingsScreen({
             />
           </div>
         </div>
-        <button onClick={saveGoal} className="px-6 py-3 bg-brand-sage text-white rounded-full font-bold flex items-center gap-2 hover:bg-brand-sage-light hover:text-brand-olive transition">
-          Sla Team Doel Op
-        </button>
+        <div className="flex items-center gap-4">
+          <button onClick={saveGoal} className="px-6 py-3 bg-brand-sage text-white rounded-full font-bold flex items-center gap-2 hover:bg-brand-sage-light hover:text-brand-olive transition">
+            Sla Team Doel Op
+          </button>
+          {goalSavedSuccess && (
+            <span className="text-sm font-bold text-green-600 animate-fade-in flex items-center gap-1.5">
+              ✓ Team doel succesvol opgeslagen!
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Locations */}

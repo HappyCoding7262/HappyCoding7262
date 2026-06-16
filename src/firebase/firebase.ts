@@ -1,10 +1,16 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, User, signOut } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, enableMultiTabIndexedDbPersistence } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId);
+
+// Schakel offline persistentie in voor een naadloze offline-first werking
+enableMultiTabIndexedDbPersistence(db).catch((err) => {
+  console.warn("Firestore offline persistentie kon niet worden ingeschakeld (of is al geactiveerd):", err.message);
+});
+
 export const auth = getAuth(app);
 
 const provider = new GoogleAuthProvider();
