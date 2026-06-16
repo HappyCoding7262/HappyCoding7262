@@ -44,6 +44,15 @@ export default function App() {
   const [locations, setLocations] = useState<LocationInfo[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeStaffName, setActiveStaffName] = useState<string>('Groep');
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fallback timer om oneindig laden te voorkomen
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (currentUser) {
@@ -210,14 +219,17 @@ export default function App() {
         setCurrentUser(foundUser);
       }
     }
+    if (users.length > 0) {
+      setIsLoading(false);
+    }
   }, [users]);
 
   // Change current user
   const handleUserSwitch = (userId: string) => {
+    localStorage.setItem(STORAGE_KEY_LOGGED_IN, userId);
     const targetUser = users.find(u => u.id === userId);
     if (targetUser) {
       setCurrentUser(targetUser);
-      localStorage.setItem(STORAGE_KEY_LOGGED_IN, userId);
     }
   };
 
@@ -375,6 +387,12 @@ export default function App() {
       ? user 
       : { ...user, id: `user-${Date.now()}`, points: 0, hearts: 0 };
     saveUser(newUser as User);
+    
+    // Log alleen direct in als er momenteel niemand is ingelogd (bijv. tijdens registratie)
+    if (!currentUser) {
+      setCurrentUser(newUser as User);
+      localStorage.setItem(STORAGE_KEY_LOGGED_IN, newUser.id);
+    }
   };
   const handleUpdateUser = (id: string, data: Partial<User>) => {
     const target = users.find(u => u.id === id);
@@ -477,6 +495,18 @@ export default function App() {
       }
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-brand-bg flex flex-col items-center justify-center p-4">
+        <div className="w-16 h-16 rounded-2xl bg-brand-peach flex items-center justify-center animate-bounce mb-4 shadow-sm">
+          <div className="w-8 h-8 border-2 border-white rounded-full flex items-center justify-center text-lg">⛵</div>
+        </div>
+        <h2 className="text-lg font-bold tracking-tight text-brand-gray animate-pulse">Laden...</h2>
+        <p className="text-xs text-brand-gray-light mt-1">Gegevens synchroniseren met de Ark database</p>
+      </div>
+    );
+  }
 
   if (!currentUser) {
     // If not logged in, show Login flow with credentials & registration
