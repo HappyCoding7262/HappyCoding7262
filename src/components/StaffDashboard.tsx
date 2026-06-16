@@ -30,6 +30,7 @@ import {
 import TaskCard from "./TaskCard";
 import TaskForm from "./TaskForm";
 import Leaderboard from "./Leaderboard";
+import TaskDetailsModal from "./TaskDetailsModal";
 
 interface StaffDashboardProps {
   tasks: Task[];
@@ -87,6 +88,7 @@ export default function StaffDashboard({
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [selectedTaskForDetails, setSelectedTaskForDetails] = useState<Task | null>(null);
 
   // Parse list of individuele leidsters in this group
   const staffList = currentUser.staffNames
@@ -553,21 +555,29 @@ export default function StaffDashboard({
                             </button>
                           )}
                           {task.status === "Completed" && (
-                            <button
-                              onClick={() => onEditTask(task.id, {
-                                status: "Open",
-                                completedByUserId: null as any,
-                                completedByName: null as any,
-                                completedAt: null as any,
-                                claimedByUserId: null as any,
-                                claimedByName: null as any,
-                                claimedAt: null as any,
-                                cheerMessage: null as any
-                              })}
-                              className="text-brand-gray hover:text-brand-peach hover:bg-brand-peach/5 text-xs font-bold px-3 py-1.5 border border-brand-border hover:border-brand-peach/50 rounded-full transition"
-                            >
-                              Heropenen ↩️
-                            </button>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setSelectedTaskForDetails(task)}
+                                className="text-brand-gray hover:text-brand-olive hover:bg-brand-bg text-xs font-bold px-3 py-1.5 border border-brand-border rounded-full transition"
+                              >
+                                Info ℹ️
+                              </button>
+                              <button
+                                onClick={() => onEditTask(task.id, {
+                                  status: "Open",
+                                  completedByUserId: null as any,
+                                  completedByName: null as any,
+                                  completedAt: null as any,
+                                  claimedByUserId: null as any,
+                                  claimedByName: null as any,
+                                  claimedAt: null as any,
+                                  cheerMessage: null as any
+                                })}
+                                className="text-brand-gray hover:text-brand-peach hover:bg-brand-peach/5 text-xs font-bold px-3 py-1.5 border border-brand-border hover:border-brand-peach/50 rounded-full transition"
+                              >
+                                Heropenen ↩️
+                              </button>
+                            </div>
                           )}
                           {task.status === "Open" && (
                             <button
@@ -723,21 +733,29 @@ export default function StaffDashboard({
                                 </button>
                               )}
                               {task.status === "Completed" && (
-                                <button
-                                  onClick={() => onEditTask(task.id, {
-                                    status: "Open",
-                                    completedByUserId: null as any,
-                                    completedByName: null as any,
-                                    completedAt: null as any,
-                                    claimedByUserId: null as any,
-                                    claimedByName: null as any,
-                                    claimedAt: null as any,
-                                    cheerMessage: null as any
-                                  })}
-                                  className="text-brand-peach hover:text-brand-peach-dark text-xs font-bold"
-                                >
-                                  Heropenen ↩️
-                                </button>
+                                <div className="flex items-center gap-3">
+                                  <button
+                                    onClick={() => setSelectedTaskForDetails(task)}
+                                    className="text-brand-olive hover:text-brand-olive-dark text-xs font-bold"
+                                  >
+                                    Info ℹ️
+                                  </button>
+                                  <button
+                                    onClick={() => onEditTask(task.id, {
+                                      status: "Open",
+                                      completedByUserId: null as any,
+                                      completedByName: null as any,
+                                      completedAt: null as any,
+                                      claimedByUserId: null as any,
+                                      claimedByName: null as any,
+                                      claimedAt: null as any,
+                                      cheerMessage: null as any
+                                    })}
+                                    className="text-brand-peach hover:text-brand-peach-dark text-xs font-bold"
+                                  >
+                                    Heropenen ↩️
+                                  </button>
+                                </div>
                               )}
                               {task.status === "Open" && (
                                 <button
@@ -803,6 +821,16 @@ export default function StaffDashboard({
             setIsAddingTask(false);
             setEditingTask(null);
           }}
+        />
+      )}
+
+      {/* Task Detailed Info Modal */}
+      {selectedTaskForDetails && (
+        <TaskDetailsModal
+          task={selectedTaskForDetails}
+          locations={locations}
+          categories={categories}
+          onClose={() => setSelectedTaskForDetails(null)}
         />
       )}
     </div>

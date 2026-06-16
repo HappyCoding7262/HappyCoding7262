@@ -27,10 +27,12 @@ import {
   Eye,
   Camera,
   X,
-  FileText
+  FileText,
+  Info
 } from 'lucide-react';
 import { Task, CategoryType, PriorityType, User as UserType, CategoryInfo, LocationInfo } from '../types';
 import AttachmentManager from './AttachmentManager';
+import TaskDetailsModal from './TaskDetailsModal';
 
 interface TaskCardProps {
   key?: string | number;
@@ -83,6 +85,7 @@ export default function TaskCard({
   
   const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null);
   const [isAddingAttachments, setIsAddingAttachments] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   
   // Map drag position to background opacity / colors
   const opacity = useTransform(dragX, [0, 160], [0.1, 0.95]);
@@ -438,25 +441,36 @@ export default function TaskCard({
                     <span className="hidden sm:inline">•</span>
                     <span className="text-brand-gray">{new Date(task.completedAt!).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })} uur</span>
                   </div>
-                  {onUpdateTask && (
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => onUpdateTask(task.id, {
-                        status: 'Open',
-                        completedByUserId: null as any,
-                        completedByName: null as any,
-                        completedAt: null as any,
-                        claimedByUserId: null as any,
-                        claimedByName: null as any,
-                        claimedAt: null as any,
-                        cheerMessage: null as any
-                      })}
-                      className="px-3.5 py-1.5 rounded-full border border-brand-border bg-white text-[11px] font-bold text-brand-gray hover:text-brand-peach hover:border-brand-peach/50 hover:bg-brand-peach/5 active:scale-95 transition shadow-xs flex items-center gap-1.5 cursor-pointer"
-                      title="Taak heropenen en terugzetten naar openstaand"
+                      onClick={() => setShowDetails(true)}
+                      className="px-3.5 py-1.5 rounded-full border border-brand-border bg-white text-[11px] font-bold text-brand-gray hover:text-brand-olive hover:border-brand-olive/50 hover:bg-brand-olive/5 active:scale-95 transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                      title="Toon alle details en voortgang van deze taak"
                     >
-                      <span>Heropenen ↩️</span>
+                      <Info className="w-3.5 h-3.5" />
+                      <span>Info</span>
                     </button>
-                  )}
+                    {onUpdateTask && (
+                      <button
+                        type="button"
+                        onClick={() => onUpdateTask(task.id, {
+                          status: 'Open',
+                          completedByUserId: null as any,
+                          completedByName: null as any,
+                          completedAt: null as any,
+                          claimedByUserId: null as any,
+                          claimedByName: null as any,
+                          claimedAt: null as any,
+                          cheerMessage: null as any
+                        })}
+                        className="px-3.5 py-1.5 rounded-full border border-brand-border bg-white text-[11px] font-bold text-brand-gray hover:text-brand-peach hover:border-brand-peach/50 hover:bg-brand-peach/5 active:scale-95 transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                        title="Taak heropenen en terugzetten naar openstaand"
+                      >
+                        <span>Heropenen ↩️</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -464,6 +478,15 @@ export default function TaskCard({
         )}
 
       </div>
+
+      {showDetails && (
+        <TaskDetailsModal
+          task={task}
+          locations={locations}
+          categories={categories}
+          onClose={() => setShowDetails(false)}
+        />
+      )}
 
       {/* Lightbox Modal */}
       {activeLightboxImage && (

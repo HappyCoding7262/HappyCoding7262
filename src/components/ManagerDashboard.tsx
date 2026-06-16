@@ -38,6 +38,7 @@ import TaskForm from "./TaskForm";
 import Leaderboard from "./Leaderboard";
 import TeamManagement from "./TeamManagement";
 import SettingsScreen from "./SettingsScreen";
+import TaskDetailsModal from "./TaskDetailsModal";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import {
@@ -118,6 +119,7 @@ export default function ManagerDashboard({
   >("feed");
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isAddingTask, setIsAddingTask] = useState(false);
+  const [selectedTaskForDetails, setSelectedTaskForDetails] = useState<Task | null>(null);
   const [complimentsLog, setComplimentsLog] = useState<Record<string, string>>(
     {},
   );
@@ -922,6 +924,12 @@ export default function ManagerDashboard({
 
                         <div className="flex gap-2">
                           <button
+                            onClick={() => setSelectedTaskForDetails(task)}
+                            className="text-brand-gray hover:text-brand-olive hover:bg-brand-bg text-xs font-bold px-3 py-1.5 border border-brand-border rounded-full transition cursor-pointer"
+                          >
+                            Info ℹ️
+                          </button>
+                          <button
                             onClick={() => onEditTask(task.id, {
                               status: 'Open',
                               completedByUserId: null as any,
@@ -1052,6 +1060,13 @@ export default function ManagerDashboard({
                           </td>
                           <td className="p-4 text-right">
                             <div className="flex justify-end gap-3">
+                              <button
+                                onClick={() => setSelectedTaskForDetails(task)}
+                                className="text-brand-olive hover:text-brand-olive-dark text-xs font-bold cursor-pointer"
+                                title="Taak details bekijken"
+                              >
+                                Info ℹ️
+                              </button>
                               <button
                                 onClick={() => onEditTask(task.id, {
                                   status: 'Open',
@@ -1218,6 +1233,16 @@ export default function ManagerDashboard({
             setIsAddingTask(false);
             setEditingTask(null);
           }}
+        />
+      )}
+
+      {/* Task Detailed Info Modal */}
+      {selectedTaskForDetails && (
+        <TaskDetailsModal
+          task={selectedTaskForDetails}
+          locations={locations}
+          categories={categories}
+          onClose={() => setSelectedTaskForDetails(null)}
         />
       )}
     </div>
