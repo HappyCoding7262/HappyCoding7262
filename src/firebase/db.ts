@@ -49,7 +49,7 @@ export function sanitizeObject(obj: any): any {
 export const subscribeToUsers = (callback: (users: User[]) => void) => {
   const q = query(collection(db, 'users'));
   return onSnapshot(q, (snapshot) => {
-    callback(snapshot.docs.map(d => d.data() as User));
+    callback(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as User)));
   }, (err) => {
     handleFirestoreError(err, OperationType.LIST, 'users');
   });
@@ -78,7 +78,7 @@ export const deleteUserDB = async (userId: string) => {
 export const subscribeToTasks = (callback: (tasks: Task[]) => void) => {
   const q = query(collection(db, 'tasks'), orderBy('createdAt', 'desc'));
   return onSnapshot(q, (snapshot) => {
-    callback(snapshot.docs.map(d => d.data() as Task));
+    callback(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Task)));
   }, (err) => {
     handleFirestoreError(err, OperationType.LIST, 'tasks');
   });
@@ -115,7 +115,7 @@ export const deleteTaskDB = async (taskId: string) => {
 export const subscribeToLocations = (callback: (locations: LocationInfo[]) => void) => {
   const q = query(collection(db, 'locations'));
   return onSnapshot(q, (snapshot) => {
-    callback(snapshot.docs.map(d => d.data() as LocationInfo));
+    callback(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as LocationInfo)));
   }, (err) => {
     handleFirestoreError(err, OperationType.LIST, 'locations');
   });
@@ -143,7 +143,7 @@ export const deleteLocationDB = async (locId: string) => {
 export const subscribeToCategories = (callback: (categories: CategoryInfo[]) => void) => {
   const q = query(collection(db, 'categories'));
   return onSnapshot(q, (snapshot) => {
-    callback(snapshot.docs.map(d => d.data() as CategoryInfo));
+    callback(snapshot.docs.map(d => ({ type: d.id, ...d.data() } as CategoryInfo)));
   }, (err) => {
     handleFirestoreError(err, OperationType.LIST, 'categories');
   });
@@ -173,6 +173,8 @@ export const subscribeToGoal = (callback: (goal: { targetTasks: number; rewardDe
   return onSnapshot(goalDocRef, (docSnap) => {
     if (docSnap.exists()) {
       callback(docSnap.data() as { targetTasks: number; rewardDescription: string });
+    } else {
+      callback({ targetTasks: 10, rewardDescription: 'de verrassing van deze week!' });
     }
   }, (err) => {
     handleFirestoreError(err, OperationType.GET, 'goals/teamGoal');

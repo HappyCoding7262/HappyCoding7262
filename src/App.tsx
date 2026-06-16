@@ -45,14 +45,29 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeStaffName, setActiveStaffName] = useState<string>('Groep');
   const [isLoading, setIsLoading] = useState(true);
+  const [loadedSources, setLoadedSources] = useState({
+    users: false,
+    tasks: false,
+    locations: false,
+    categories: false,
+    goal: false
+  });
 
-  // Fallback timer om oneindig laden te voorkomen
+  // Fallback timer om oneindig laden te voorkomen bij offline status of storing
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2500);
+    }, 10000); // Verhoogd naar 10s voor perfecte netwerktolerantie op Vercel
     return () => clearTimeout(timer);
   }, []);
+
+  // Schakel direct 'isLoading' uit zodra alle real-time Firestore-bronnen zijn gesynchroniseerd
+  useEffect(() => {
+    const isAllLoaded = Object.values(loadedSources).every(v => v);
+    if (isAllLoaded) {
+      setIsLoading(false);
+    }
+  }, [loadedSources]);
 
   useEffect(() => {
     if (currentUser) {
@@ -183,22 +198,27 @@ export default function App() {
     // 2. Subscribe to resources - no automatic seeding inside individual subscription events
     const unsubLocs = subscribeToLocations((dbLocs) => {
       setLocations(dbLocs);
+      setLoadedSources(prev => ({ ...prev, locations: true }));
     });
 
     const unsubCats = subscribeToCategories((dbCats) => {
       setCategories(dbCats);
+      setLoadedSources(prev => ({ ...prev, categories: true }));
     });
 
     const unsubUsers = subscribeToUsers((dbUsers) => {
       setUsers(dbUsers);
+      setLoadedSources(prev => ({ ...prev, users: true }));
     });
 
     const unsubTasks = subscribeToTasks((dbTasks) => {
       setTasks(dbTasks);
+      setLoadedSources(prev => ({ ...prev, tasks: true }));
     });
 
     const unsubGoal = subscribeToGoal((dbGoal) => {
       setTeamGoal(dbGoal);
+      setLoadedSources(prev => ({ ...prev, goal: true }));
     });
 
     return () => {
@@ -218,9 +238,6 @@ export default function App() {
       if (foundUser) {
         setCurrentUser(foundUser);
       }
-    }
-    if (users.length > 0) {
-      setIsLoading(false);
     }
   }, [users]);
 
