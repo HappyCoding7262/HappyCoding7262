@@ -308,10 +308,11 @@ export default function LoginScreen({ users, locations, onLogin, onRegister, onR
 
             <button
               type="submit"
-              className="w-full py-4 px-6 bg-brand-olive hover:bg-brand-olive-light text-white text-xs font-bold uppercase tracking-widest rounded-full transition duration-200 flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+              disabled={users.length === 0}
+              className="w-full py-4 px-6 bg-brand-olive hover:bg-brand-olive-light disabled:bg-brand-gray-light disabled:cursor-not-allowed text-white text-xs font-bold uppercase tracking-widest rounded-full transition duration-200 flex items-center justify-center gap-2 shadow-sm cursor-pointer"
             >
-              Account Inloggen
-              <ArrowRight className="w-4 h-4" />
+              {users.length === 0 ? 'Gegevens laden van de Ark...' : 'Account Inloggen'}
+              {users.length > 0 && <ArrowRight className="w-4 h-4" />}
             </button>
           </form>
         )}

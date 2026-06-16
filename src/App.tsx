@@ -38,32 +38,104 @@ import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 const STORAGE_KEY_LOGGED_IN = 'ark_takenbeheer_logged_in_id';
 
 export default function App() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [categories, setCategories] = useState<CategoryInfo[]>([]);
-  const [locations, setLocations] = useState<LocationInfo[]>([]);
+  const [tasks, setTasks] = useState<Task[]>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem('ark_cached_tasks');
+        return cached ? JSON.parse(cached) : [];
+      }
+    } catch {}
+    return [];
+  });
+
+  const [users, setUsers] = useState<User[]>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem('ark_cached_users');
+        return cached ? JSON.parse(cached) : [];
+      }
+    } catch {}
+    return [];
+  });
+
+  const [categories, setCategories] = useState<CategoryInfo[]>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem('ark_cached_categories');
+        return cached ? JSON.parse(cached) : [];
+      }
+    } catch {}
+    return [];
+  });
+
+  const [locations, setLocations] = useState<LocationInfo[]>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem('ark_cached_locations');
+        return cached ? JSON.parse(cached) : [];
+      }
+    } catch {}
+    return [];
+  });
+
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     try {
-      const cached = localStorage.getItem('ark_cached_current_user');
-      return cached ? JSON.parse(cached) : null;
-    } catch {
-      return null;
-    }
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem('ark_cached_current_user');
+        return cached ? JSON.parse(cached) : null;
+      }
+    } catch {}
+    return null;
   });
 
   // Keep cached user and token synchronized locally
   useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem('ark_cached_current_user', JSON.stringify(currentUser));
-      localStorage.setItem(STORAGE_KEY_LOGGED_IN, currentUser.id);
-    } else {
-      localStorage.removeItem('ark_cached_current_user');
-      localStorage.removeItem(STORAGE_KEY_LOGGED_IN);
-    }
+    try {
+      if (currentUser) {
+        localStorage.setItem('ark_cached_current_user', JSON.stringify(currentUser));
+        localStorage.setItem(STORAGE_KEY_LOGGED_IN, currentUser.id);
+      } else {
+        localStorage.removeItem('ark_cached_current_user');
+        localStorage.removeItem(STORAGE_KEY_LOGGED_IN);
+      }
+    } catch {}
   }, [currentUser]);
 
+  // Keep other dynamic data synchronized in localStorage in the background
+  useEffect(() => {
+    if (users.length > 0) {
+      try {
+        localStorage.setItem('ark_cached_users', JSON.stringify(users));
+      } catch {}
+    }
+  }, [users]);
+
+  useEffect(() => {
+    if (tasks.length > 0) {
+      try {
+        localStorage.setItem('ark_cached_tasks', JSON.stringify(tasks));
+      } catch {}
+    }
+  }, [tasks]);
+
+  useEffect(() => {
+    if (categories.length > 0) {
+      try {
+        localStorage.setItem('ark_cached_categories', JSON.stringify(categories));
+      } catch {}
+    }
+  }, [categories]);
+
+  useEffect(() => {
+    if (locations.length > 0) {
+      try {
+        localStorage.setItem('ark_cached_locations', JSON.stringify(locations));
+      } catch {}
+    }
+  }, [locations]);
+
   const [activeStaffName, setActiveStaffName] = useState<string>('Groep');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Default false for instantaneous view loading
   const [loadedSources, setLoadedSources] = useState({
     users: false,
     tasks: false,
@@ -72,26 +144,13 @@ export default function App() {
     goal: false
   });
 
-  // Fallback timer om oneindig laden te voorkomen bij offline status of storing
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 10000); // Verhoogd naar 10s voor perfecte netwerktolerantie op Vercel
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Schakel direct 'isLoading' uit zodra alle real-time Firestore-bronnen zijn gesynchroniseerd
-  useEffect(() => {
-    const isAllLoaded = Object.values(loadedSources).every(v => v);
-    if (isAllLoaded) {
-      setIsLoading(false);
-    }
-  }, [loadedSources]);
-
+  // Keep active staff name loaded from localStorage
   useEffect(() => {
     if (currentUser) {
-      const saved = localStorage.getItem(`activeStaffName_${currentUser.id}`);
-      setActiveStaffName(saved || 'Groep');
+      try {
+        const saved = localStorage.getItem(`activeStaffName_${currentUser.id}`);
+        setActiveStaffName(saved || 'Groep');
+      } catch {}
     } else {
       setActiveStaffName('Groep');
     }
