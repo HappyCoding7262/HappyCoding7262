@@ -42,7 +42,26 @@ export default function App() {
   const [users, setUsers] = useState<User[]>([]);
   const [categories, setCategories] = useState<CategoryInfo[]>([]);
   const [locations, setLocations] = useState<LocationInfo[]>([]);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    try {
+      const cached = localStorage.getItem('ark_cached_current_user');
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Keep cached user and token synchronized locally
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem('ark_cached_current_user', JSON.stringify(currentUser));
+      localStorage.setItem(STORAGE_KEY_LOGGED_IN, currentUser.id);
+    } else {
+      localStorage.removeItem('ark_cached_current_user');
+      localStorage.removeItem(STORAGE_KEY_LOGGED_IN);
+    }
+  }, [currentUser]);
+
   const [activeStaffName, setActiveStaffName] = useState<string>('Groep');
   const [isLoading, setIsLoading] = useState(true);
   const [loadedSources, setLoadedSources] = useState({
@@ -138,31 +157,68 @@ export default function App() {
           console.warn("Database-initialisatie overgeslagen: u bent offline. Zodra u verbinding heeft, wordt dit gecontroleerd.");
           return;
         }
+        
         const setupDocRef = doc(db, 'system', 'setup');
-        const setupSnap = await getDoc(setupDocRef);
-        if (!setupSnap.exists() || !setupSnap.data()?.initialized) {
-          console.log("Database has never been initialized. Seeding initial data...");
+        const setupSnap = await getDoc(setupDocRef).catch(() => null);
+        const localFlag = localStorage.getItem('ark_db_initialized_flag');
+
+        const isConfigured = (setupSnap && setupSnap.exists() && setupSnap.data()?.initialized) || localFlag;
+
+        if (!isConfigured) {
+          console.log("Database has never been initialized. Seeding initial data safely...");
           
-          for (const loc of LOCATIONS) {
-            await saveLocationDB(loc);
+          // Double check collection emptiness to avoid ever overwriting existent client data
+          const { getDocs, query, collection, limit } = await import('firebase/firestore');
+          
+          const usersSnap = await getDocs(query(collection(db, 'users'), limit(1))).catch(() => null);
+          if (!usersSnap || usersSnap.empty) {
+            console.log("No users found in Firestore. Seeding admin & default users...");
+            for (const user of MOCK_USERS) {
+              await saveUser(user);
+            }
           }
-          for (const cat of Object.values(CATEGORIES)) {
-            await saveCategoryDB(cat);
+          
+          const tasksSnap = await getDocs(query(collection(db, 'tasks'), limit(1))).catch(() => null);
+          if (!tasksSnap || tasksSnap.empty) {
+            if (INITIAL_TASKS.length > 0) {
+              console.log("No tasks found in Firestore. Seeding default tasks...");
+              for (const task of INITIAL_TASKS) {
+                await createTaskDB(task);
+              }
+            }
           }
-          for (const user of MOCK_USERS) {
-            await saveUser(user);
+
+          const locsSnap = await getDocs(query(collection(db, 'locations'), limit(1))).catch(() => null);
+          if (!locsSnap || locsSnap.empty) {
+            if (LOCATIONS.length > 0) {
+              console.log("No locations found in Firestore. Seeding default locations...");
+              for (const loc of LOCATIONS) {
+                await saveLocationDB(loc);
+              }
+            }
           }
-          for (const task of INITIAL_TASKS) {
-            await createTaskDB(task);
+
+          const catsSnap = await getDocs(query(collection(db, 'categories'), limit(1))).catch(() => null);
+          if (!catsSnap || catsSnap.empty) {
+            console.log("No categories found in Firestore. Seeding default categories...");
+            for (const cat of Object.values(CATEGORIES)) {
+              await saveCategoryDB(cat);
+            }
           }
-          await saveGoalDB({ targetTasks: 10, rewardDescription: 'de verrassing van deze week!' });
-          await setDoc(setupDocRef, { initialized: true });
+          
+          await saveGoalDB({ targetTasks: 10, rewardDescription: 'de verrassing van deze week!' }).catch(() => null);
+          await setDoc(setupDocRef, { initialized: true }).catch(() => null);
+          localStorage.setItem('ark_db_initialized_flag', 'true');
           console.log("Database seeding completed successfully!");
+        } else {
+          if (!localFlag) {
+            localStorage.setItem('ark_db_initialized_flag', 'true');
+          }
         }
 
         // Garandeer dat de beheerder 'Mark' altijd met de juiste credentials in de database staat
         const adminDocRef = doc(db, 'users', 'user-mark');
-        const adminSnap = await getDoc(adminDocRef);
+        const adminSnap = await getDoc(adminDocRef).catch(() => null);
         const correctAdminUser: User = {
           id: 'user-mark',
           name: 'Mark',
@@ -171,13 +227,13 @@ export default function App() {
           bio: 'Systeembeheerder & techniek.',
           locationId: '',
           groupId: '',
-          points: adminSnap.exists() ? (adminSnap.data()?.points || 0) : 0,
-          streakCount: adminSnap.exists() ? (adminSnap.data()?.streakCount || 0) : 0,
+          points: (adminSnap && adminSnap.exists()) ? (adminSnap.data()?.points || 0) : 0,
+          streakCount: (adminSnap && adminSnap.exists()) ? (adminSnap.data()?.streakCount || 0) : 0,
           email: 'mark@kindercentrum-ark.nl',
           password: 'asdhjkl@3111AA'
         };
 
-        if (!adminSnap.exists() || 
+        if (!adminSnap || !adminSnap.exists() || 
             adminSnap.data()?.password !== 'asdhjkl@3111AA' || 
             adminSnap.data()?.email !== 'mark@kindercentrum-ark.nl' ||
             adminSnap.data()?.role !== 'Beheerder') {
@@ -230,16 +286,26 @@ export default function App() {
     };
   }, []);
 
-  // Sync active user sessions and updates with state changes
+  // Sync active user sessions and updates with state changes safely
   useEffect(() => {
-    const savedUserId = localStorage.getItem(STORAGE_KEY_LOGGED_IN);
-    if (savedUserId && users.length > 0) {
-      const foundUser = users.find((u: User) => u.id === savedUserId);
+    if (currentUser && users.length > 0) {
+      const foundUser = users.find((u: User) => u.id === currentUser.id);
       if (foundUser) {
-        setCurrentUser(foundUser);
+        // Only update state if database fields have changed to avoid circular re-renders
+        if (JSON.stringify(foundUser) !== JSON.stringify(currentUser)) {
+          setCurrentUser(foundUser);
+        }
+      }
+    } else if (!currentUser && users.length > 0) {
+      const savedUserId = localStorage.getItem(STORAGE_KEY_LOGGED_IN);
+      if (savedUserId) {
+        const foundUser = users.find((u: User) => u.id === savedUserId);
+        if (foundUser) {
+          setCurrentUser(foundUser);
+        }
       }
     }
-  }, [users]);
+  }, [users, currentUser]);
 
   // Change current user
   const handleUserSwitch = (userId: string) => {
